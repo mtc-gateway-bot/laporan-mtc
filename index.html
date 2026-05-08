@@ -8,26 +8,14 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #121212; color: white; text-align: center; }
         .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .container { padding: 15px; display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto; }
-        
         .form-group { width: 100%; margin-bottom: 15px; text-align: left; }
         label { font-size: 13px; color: #bbb; margin-bottom: 8px; display: block; font-weight: 500; }
-        
         select, input { 
             width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; 
             background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px;
             outline: none; transition: border 0.3s;
         }
-        input:focus { border-color: #007bff; }
-
-        #kodeToko {
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px top 50%;
-            background-size: 12px auto;
-        }
-
         #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
-
         .camera-box { 
             position: relative; width: 100%; height: 380px; 
             background: #000; border: 2px solid #333; border-radius: 15px; 
@@ -39,13 +27,8 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             object-fit: cover; opacity: 0.4; display: none; pointer-events: none; 
         }
-
         .btn-group { margin-top: 20px; width: 100%; }
-        button { 
-            width: 100%; padding: 16px; font-size: 16px; font-weight: bold; 
-            border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer;
-        }
-        
+        button { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
         #btn-main { background: #ffc107; color: black; }
         #btn-send { background: #28a745; color: white; display: none; }
         #btn-retry { background: #6c757d; color: white; display: none; }
@@ -112,7 +95,7 @@
             const res = await fetch(GAS_URL);
             daftarToko = await res.json();
             const list = document.getElementById('listToko');
-            daftarToko.innerHTML = "";
+            list.innerHTML = "";
             daftarToko.forEach(t => {
                 let opt = document.createElement('option');
                 opt.value = t.kode;
@@ -125,6 +108,7 @@
     function updateNamaToko() {
         const input = document.getElementById('kodeToko').value.trim().toUpperCase();
         const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
+        
         if (input === "") {
             displayNama.innerText = "-- Nama Toko Akan Muncul --";
             displayNama.style.color = "#ffc107";
@@ -135,6 +119,8 @@
             displayNama.innerText = "-- Kode Tidak Dikenal --";
             displayNama.style.color = "#dc3545";
         }
+        // PENTING: Setiap ganti kode toko, cek apakah ada bayangan untuk toko tersebut
+        toggleGhost();
     }
 
     async function handleKamera() {
@@ -152,43 +138,43 @@
     }
 
     function tangkapFoto() {
-    const tahap = document.getElementById('tahap').value;
-    const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
+        const tahap = document.getElementById('tahap').value;
+        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
 
-    if (!kode) {
-        alert("Pilih/Isi Kode Toko dulu sebelum ambil foto!");
-        return;
+        if (!kode) {
+            alert("Harap masukkan Kode Toko terlebih dahulu!");
+            return;
+        }
+
+        const storageKey = "foto_mtc_" + kode;
+        const adaFotoLama = localStorage.getItem(storageKey);
+
+        if (tahap === "SEBELUM" && adaFotoLama) {
+            const tanya = confirm("Sudah ada foto SEBELUM untuk toko ini. Ingin mengganti bayangannya?");
+            if (!tanya) return;
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        preview.src = dataURL;
+        
+        // Simpan bayangan KHUSUS untuk kode toko ini
+        if (tahap === "SEBELUM") {
+            localStorage.setItem(storageKey, dataURL);
+        }
+        
+        video.style.display = "none";
+        preview.style.display = "block";
+        ghost.style.display = "none";
+        btnMain.style.display = "none";
+        btnSend.style.display = "block";
+        btnRetry.style.display = "block";
     }
-
-    // Nama penyimpanan unik per toko
-    const storageKey = "foto_mtc_" + kode;
-    const adaFotoLama = localStorage.getItem(storageKey);
-
-    if (tahap === "SEBELUM" && adaFotoLama) {
-        const tanya = confirm("Sudah ada foto SEBELUM untuk toko " + kode + ". Ingin mengganti bayangannya?");
-        if (!tanya) return;
-    }
-
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    
-    const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-    preview.src = dataURL;
-    
-    if (tahap === "SEBELUM") {
-        localStorage.setItem(storageKey, dataURL);
-    }
-    
-    video.style.display = "none";
-    preview.style.display = "block";
-    ghost.style.display = "none";
-    btnMain.style.display = "none";
-    btnSend.style.display = "block";
-    btnRetry.style.display = "block";
-}
 
     function resetKamera() {
         video.style.display = "block";
@@ -201,8 +187,13 @@
 
     function toggleGhost() {
         const tahap = document.getElementById('tahap').value;
-        const fotoTersimpan = localStorage.getItem("foto_mtc_sebelum");
-        if (tahap === "SESUDAH" && fotoTersimpan) {
+        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
+        
+        // Hanya cari foto yang kuncinya cocok dengan Kode Toko
+        const storageKey = "foto_mtc_" + kode;
+        const fotoTersimpan = localStorage.getItem(storageKey);
+
+        if (tahap === "SESUDAH" && fotoTersimpan && kode !== "") {
             ghost.src = fotoTersimpan;
             ghost.style.display = "block";
         } else {
@@ -211,12 +202,12 @@
     }
 
     function kirimKeDrive() {
-        const kode = document.getElementById('kodeToko').value.trim();
+        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
         const infoNama = displayNama.innerText;
         const tahap = document.getElementById('tahap').value;
 
         if (!kode || infoNama.includes("Tidak Dikenal")) {
-            alert("Kode Toko harus diisi dengan benar!");
+            alert("Kode Toko tidak valid!");
             return;
         }
 
@@ -234,19 +225,18 @@
         }).then(() => {
             alert("SUKSES TERKIRIM!");
             
-            // Jika sukses kirim SESUDAH, hapus memory bayangan agar bersih
+            // Hapus memory bayangan hanya untuk toko yang baru saja selesai dikirim SESUDAH
             if (tahap === "SESUDAH") {
-                localStorage.removeItem("foto_mtc_sebelum");
+                localStorage.removeItem("foto_mtc_" + kode);
             }
             
             location.reload();
         }).catch(e => {
-            alert("Gagal kirim, cek sinyal!");
+            alert("Gagal kirim!");
             btnSend.disabled = false;
         });
     }
     
-    // Jalankan pengecekan ghost saat baru buka halaman
     window.onload = toggleGhost;
 </script>
 </body>
