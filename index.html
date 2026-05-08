@@ -19,7 +19,6 @@
         }
         input:focus { border-color: #007bff; }
 
-        /* Style Khusus Input Kode Toko agar terlihat seperti Dropdown */
         #kodeToko {
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat;
@@ -27,15 +26,12 @@
             background-size: 12px auto;
         }
 
-        #displayNama { 
-            margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; 
-            min-height: 1.2em; padding-left: 5px;
-        }
+        #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
 
         .camera-box { 
             position: relative; width: 100%; height: 380px; 
             background: #000; border: 2px solid #333; border-radius: 15px; 
-            overflow: hidden; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            overflow: hidden; margin-top: 10px;
         }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
@@ -48,14 +44,11 @@
         button { 
             width: 100%; padding: 16px; font-size: 16px; font-weight: bold; 
             border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
         }
-        button:active { transform: scale(0.98); }
         
         #btn-main { background: #ffc107; color: black; }
         #btn-send { background: #28a745; color: white; display: none; }
         #btn-retry { background: #6c757d; color: white; display: none; }
-        
         #status { font-size: 12px; color: #777; margin-top: 5px; }
         canvas { display: none; }
     </style>
@@ -91,19 +84,17 @@
         <button id="btn-main" onclick="handleKamera()">AKTIFKAN KAMERA</button>
         <button id="btn-send" onclick="kirimKeDrive()">KIRIM LAPORAN</button>
         <button id="btn-retry" onclick="resetKamera()">AMBIL ULANG</button>
-        <p id="status">Status: Menunggu Izin Kamera</p>
+        <p id="status">Status: Standby</p>
     </div>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-    // MASUKKAN URL /exec ANDA DI SINI
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
     
     let daftarToko = []; 
     let streamAktif = null;
-    let fotoSebelumnya = null;
 
     const video = document.getElementById('video');
     const preview = document.getElementById('preview');
@@ -114,43 +105,38 @@
     const statusTxt = document.getElementById('status');
     const displayNama = document.getElementById('displayNama');
 
-    // 1. Ambil daftar toko dari Google Sheets (Sheet: Korwil)
     async function muatDaftarToko() {
         if (daftarToko.length > 0) return;
-        statusTxt.innerText = "Sinkronisasi data korwil...";
+        statusTxt.innerText = "Sinkronisasi data...";
         try {
             const res = await fetch(GAS_URL);
             daftarToko = await res.json();
             const list = document.getElementById('listToko');
+            daftarToko.innerHTML = "";
             daftarToko.forEach(t => {
                 let opt = document.createElement('option');
                 opt.value = t.kode;
                 list.appendChild(opt);
             });
-            statusTxt.innerText = "Data Toko Siap.";
-        } catch (e) { 
-            statusTxt.innerText = "Gagal sinkronisasi data."; 
-        }
+            statusTxt.innerText = "Data Siap.";
+        } catch (e) { statusTxt.innerText = "Gagal sinkronisasi."; }
     }
 
-    // 2. Tampilkan nama toko saat kode diketik
     function updateNamaToko() {
         const input = document.getElementById('kodeToko').value.trim().toUpperCase();
         const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
-        
         if (input === "") {
             displayNama.innerText = "-- Nama Toko Akan Muncul --";
             displayNama.style.color = "#ffc107";
         } else if (ketemu) {
             displayNama.innerText = "Toko: " + ketemu.nama;
-            displayNama.style.color = "#28a745"; // Hijau jika valid
+            displayNama.style.color = "#28a745";
         } else {
             displayNama.innerText = "-- Kode Tidak Dikenal --";
-            displayNama.style.color = "#dc3545"; // Merah jika salah
+            displayNama.style.color = "#dc3545";
         }
     }
 
-    // 3. Fungsi Kamera
     async function handleKamera() {
         if (!streamAktif) {
             try {
@@ -158,17 +144,23 @@
                 streamAktif = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = streamAktif;
                 btnMain.innerText = "AMBIL FOTO";
-                statusTxt.innerText = "Kamera Aktif.";
                 toggleGhost();
-            } catch (e) { 
-                alert("Mohon izinkan akses kamera!"); 
-            }
+            } catch (e) { alert("Izin kamera ditolak!"); }
         } else {
             tangkapFoto();
         }
     }
 
     function tangkapFoto() {
+        const tahap = document.getElementById('tahap').value;
+        const adaFotoLama = localStorage.getItem("foto_mtc_sebelum");
+
+        // PROTEKSI: Jika salah pencet SEBELUM padahal sudah ada foto lama
+        if (tahap === "SEBELUM" && adaFotoLama) {
+            const tanya = confirm("Sudah ada foto SEBELUM yang tersimpan untuk bayangan. Apakah Anda ingin menggantinya dengan foto baru ini?");
+            if (!tanya) return; // Batalkan ambil foto baru jika user menolak
+        }
+
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = video.videoWidth;
@@ -177,6 +169,11 @@
         
         const dataURL = canvas.toDataURL('image/jpeg', 0.8);
         preview.src = dataURL;
+        
+        // Simpan bayangan ke memori HP jika tahapnya SEBELUM
+        if (tahap === "SEBELUM") {
+            localStorage.setItem("foto_mtc_sebelum", dataURL);
+        }
         
         video.style.display = "none";
         preview.style.display = "block";
@@ -197,75 +194,53 @@
 
     function toggleGhost() {
         const tahap = document.getElementById('tahap').value;
-        if (tahap === "SESUDAH" && fotoSebelumnya) {
-            ghost.src = fotoSebelumnya;
+        const fotoTersimpan = localStorage.getItem("foto_mtc_sebelum");
+        if (tahap === "SESUDAH" && fotoTersimpan) {
+            ghost.src = fotoTersimpan;
             ghost.style.display = "block";
         } else {
             ghost.style.display = "none";
         }
     }
 
-    // 4. KIRIM DATA DENGAN VALIDASI KETAT
     function kirimKeDrive() {
         const kode = document.getElementById('kodeToko').value.trim();
         const infoNama = displayNama.innerText;
         const tahap = document.getElementById('tahap').value;
 
-        // Validasi 1: Kode Kosong
-        if (!kode) {
-            alert("Peringatan: KODE TOKO tidak boleh kosong!");
-            document.getElementById('kodeToko').focus();
+        if (!kode || infoNama.includes("Tidak Dikenal")) {
+            alert("Kode Toko harus diisi dengan benar!");
             return;
         }
 
-        // Validasi 2: Kode Tidak Valid/Tidak Ada di Sheet
-        if (infoNama.includes("Tidak Dikenal") || infoNama.includes("Akan Muncul")) {
-            alert("Peringatan: KODE TOKO tidak valid atau belum terdaftar di sistem Korwil!");
-            return;
-        }
-
-        statusTxt.innerText = "Sedang mengunggah foto...";
+        statusTxt.innerText = "Mengirim...";
         btnSend.disabled = true;
 
-        // Kuncinya: Hapus mode: "no-cors" agar bisa membaca respon JSON
         fetch(GAS_URL, {
             method: "POST",
+            mode: "no-cors",
             body: JSON.stringify({
                 tahap: tahap,
                 kodeToko: kode,
                 foto: preview.src
             })
-        })
-        .then(response => {
-            // Karena kita mengirim ke Google Script, respon biasanya berupa redirect atau opaque
-            // Namun dengan Google Script Web App, kita coba tangkap sebagai text/json
-            return response.text(); 
-        })
-        .then(result => {
-            // Kita coba cek apakah isi pesannya sukses
-            alert("LAPORAN TERKIRIM!\nFolder: " + infoNama.replace("Toko: ", ""));
+        }).then(() => {
+            alert("SUKSES TERKIRIM!");
             
-            if (tahap === "SEBELUM") fotoSebelumnya = preview.src;
+            // Jika sukses kirim SESUDAH, hapus memory bayangan agar bersih
+            if (tahap === "SESUDAH") {
+                localStorage.removeItem("foto_mtc_sebelum");
+            }
             
-            // Reset form dan tampilan
-            resetKamera();
-            document.getElementById('kodeToko').value = "";
-            displayNama.innerText = "-- Nama Toko Akan Muncul --";
-            displayNama.style.color = "#ffc107";
+            location.reload();
+        }).catch(e => {
+            alert("Gagal kirim, cek sinyal!");
             btnSend.disabled = false;
-            statusTxt.innerText = "Laporan berhasil diunggah.";
-        })
-        .catch(error => {
-            // Jika terjadi error koneksi atau CORS (tapi seringkali file tetap masuk)
-            console.error('Error:', error);
-            alert("Proses selesai. Jika folder belum muncul di Drive dalam 1 menit, silakan cek sinyal dan coba lagi.");
-            btnSend.disabled = false;
-            statusTxt.innerText = "Selesai.";
-            
-            // Tetap reset jika ingin melanjutkan ke foto berikutnya
-            resetKamera();
         });
     }
+    
+    // Jalankan pengecekan ghost saat baru buka halaman
+    window.onload = toggleGhost;
 </script>
 </body>
 </html>
