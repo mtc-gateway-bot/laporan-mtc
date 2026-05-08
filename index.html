@@ -16,6 +16,12 @@
             outline: none; transition: border 0.3s;
         }
         #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
+        
+        /* Grid Slot Styles */
+        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
+        .slot-label { font-size: 10px; color: #666; position: absolute; font-weight: bold; }
+
         .camera-box { 
             position: relative; width: 100%; height: 380px; 
             background: #000; border: 2px solid #333; border-radius: 15px; 
@@ -34,11 +40,6 @@
         #btn-retry { background: #6c757d; color: white; display: none; }
         #status { font-size: 12px; color: #777; margin-top: 5px; }
         canvas { display: none; }
-        
-        /* Style Tambahan untuk Slot Grid */
-        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
-        .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
-        .slot-label { font-size: 10px; color: #666; position: absolute; }
     </style>
 </head>
 <body>
@@ -63,7 +64,7 @@
     </div>
 
     <div id="grid-container" style="display:none; width: 100%; margin-bottom: 15px;">
-        <p style="font-size: 12px; color: #ffc107; text-align: left; margin-bottom: 8px;">Isi Slot Foto (Klik kotak untuk mengisi):</p>
+        <p style="font-size: 12px; color: #ffc107; text-align: left; margin-bottom: 8px;">Klik kotak untuk Kamera/Galeri:</p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
             <div class="slot-grid" onclick="pilihFoto(0)">
                 <img id="slot-0" style="display:none;">
@@ -82,7 +83,7 @@
                 <span id="label-3" class="slot-label">FOTO 4</span>
             </div>
         </div>
-        <button id="btn-generate-grid" onclick="buatKolase()" style="margin-top: 12px; background: #17a2b8; color: white; padding: 16px; width: 100%; border-radius: 10px; font-weight: bold; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+        <button onclick="buatKolase()" style="margin-top: 12px; background: #17a2b8; color: white; padding: 16px; width: 100%; border-radius: 10px; font-weight: bold; border: none;">
             GABUNG & SIMPAN KE HP
         </button>
     </div>
@@ -101,6 +102,7 @@
     </div>
 </div>
 
+<input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="prosesFileGaleri(event)">
 <canvas id="canvas"></canvas>
 
 <script>
@@ -140,7 +142,6 @@
     function updateNamaToko() {
         const input = document.getElementById('kodeToko').value.trim().toUpperCase();
         const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
-        
         if (input === "") {
             displayNama.innerText = "-- Nama Toko Akan Muncul --";
             displayNama.style.color = "#ffc107";
@@ -170,43 +171,62 @@
 
     function pilihFoto(index) {
         slotAktif = index;
-        resetKamera();
-        statusTxt.innerText = "Ambil foto untuk Slot " + (index + 1);
-        if(!streamAktif) handleKamera();
+        const pilihan = confirm("Pilih sumber foto:\n\nOK = DARI GALERI\nCancel = PAKAI KAMERA");
+        if (pilihan) {
+            document.getElementById('fileInput').click();
+        } else {
+            statusTxt.innerText = "Ambil foto untuk Slot " + (index + 1);
+            if(!streamAktif) handleKamera();
+            document.querySelector('.camera-box').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function prosesFileGaleri(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1280; canvas.height = 720;
+                ctx.drawImage(img, 0, 0, 1280, 720);
+                isiSlot(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        event.target.value = "";
+    }
+
+    function isiSlot(dataURL) {
+        koleksiFoto[slotAktif] = dataURL;
+        const imgSlot = document.getElementById('slot-' + slotAktif);
+        imgSlot.src = dataURL;
+        imgSlot.style.display = "block";
+        document.getElementById('label-' + slotAktif).style.display = "none";
+        slotAktif = null;
+        statusTxt.innerText = "Foto slot siap.";
     }
 
     function tangkapFoto() {
         const tahap = document.getElementById('tahap').value;
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-
-        if (!kode) {
-            alert("Harap masukkan Kode Toko terlebih dahulu!");
-            return;
-        }
+        if (!kode) { alert("Masukkan Kode Toko!"); return; }
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        
         const dataURL = canvas.toDataURL('image/jpeg', 0.8);
 
         if (slotAktif !== null) {
-            koleksiFoto[slotAktif] = dataURL;
-            const imgSlot = document.getElementById('slot-' + slotAktif);
-            imgSlot.src = dataURL;
-            imgSlot.style.display = "block";
-            document.getElementById('label-' + slotAktif).style.display = "none";
-            slotAktif = null;
-            statusTxt.innerText = "Foto slot berhasil disimpan.";
+            isiSlot(dataURL);
             resetKamera();
         } else {
             preview.src = dataURL;
-            const storageKey = "foto_mtc_" + kode;
-            if (tahap === "SEBELUM") {
-                localStorage.setItem(storageKey, dataURL);
-            }
+            if (tahap === "SEBELUM") localStorage.setItem("foto_mtc_" + kode, dataURL);
             video.style.display = "none";
             preview.style.display = "block";
             ghost.style.display = "none";
@@ -217,112 +237,71 @@
     }
 
     function resetKamera() {
-        video.style.display = "block";
-        preview.style.display = "none";
-        btnMain.style.display = "block";
-        btnSend.style.display = "none";
-        btnRetry.style.display = "none";
-        toggleGhost();
+        video.style.display = "block"; preview.style.display = "none";
+        btnMain.style.display = "block"; btnSend.style.display = "none";
+        btnRetry.style.display = "none"; toggleGhost();
     }
 
     function toggleGhost() {
         const tahap = document.getElementById('tahap').value;
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-        const gridCont = document.getElementById('grid-container');
-        
-        if (tahap === "SESUDAH") {
-            gridCont.style.display = "block";
-        } else {
-            gridCont.style.display = "none";
-        }
+        document.getElementById('grid-container').style.display = (tahap === "SESUDAH") ? "block" : "none";
 
-        const storageKey = "foto_mtc_" + kode;
-        const fotoTersimpan = localStorage.getItem(storageKey);
-
+        const fotoTersimpan = localStorage.getItem("foto_mtc_" + kode);
         if (tahap === "SESUDAH" && fotoTersimpan && kode !== "") {
-            ghost.src = fotoTersimpan;
-            ghost.style.display = "block";
-        } else {
-            ghost.style.display = "none";
-        }
-    }
-
-    function kirimKeDrive() {
-        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-        const tahap = document.getElementById('tahap').value;
-
-        statusTxt.innerText = "Mengirim...";
-        btnSend.disabled = true;
-
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                tahap: tahap,
-                kodeToko: kode,
-                foto: preview.src
-            })
-        }).then(() => {
-            alert("SUKSES TERKIRIM!");
-            if (tahap === "SESUDAH") {
-                localStorage.removeItem("foto_mtc_" + kode);
-            }
-            location.reload();
-        }).catch(e => {
-            alert("Gagal kirim!");
-            btnSend.disabled = false;
-        });
+            ghost.src = fotoTersimpan; ghost.style.display = "block";
+        } else { ghost.style.display = "none"; }
     }
 
     function buatKolase() {
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
         if (!kode) { alert("Isi Kode Toko!"); return; }
+        
+        const gCanvas = document.createElement('canvas');
+        const gCtx = gCanvas.getContext('2d');
+        gCanvas.width = 2560; gCanvas.height = 1440;
+        gCtx.fillStyle = "#1a1a1a"; gCtx.fillRect(0, 0, 2560, 1440);
 
-        statusTxt.innerText = "Memproses Kolase...";
-        const gridCanvas = document.createElement('canvas');
-        const gCtx = gridCanvas.getContext('2d');
-        gridCanvas.width = 2560;
-        gridCanvas.height = 1440;
-        gCtx.fillStyle = "#1a1a1a";
-        gCtx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
-
-        const loadImages = koleksiFoto.map((src, i) => {
-            return new Promise((resolve) => {
-                if (src) {
-                    const img = new Image();
-                    img.onload = () => resolve({ img, index: i });
-                    img.src = src;
-                } else { resolve({ img: null, index: i }); }
+        const loads = koleksiFoto.map((src, i) => {
+            return new Promise(res => {
+                if (src) { const img = new Image(); img.onload = () => res({img, i}); img.src = src; }
+                else res({img: null, i});
             });
         });
 
-        Promise.all(loadImages).then((results) => {
-            results.forEach((res) => {
-                const x = (res.index % 2) * 1280;
-                const y = Math.floor(res.index / 2) * 720;
-                if (res.img) {
-                    gCtx.drawImage(res.img, x, y, 1280, 720);
-                } else {
-                    gCtx.strokeStyle = "#444";
-                    gCtx.lineWidth = 5;
-                    gCtx.strokeRect(x + 50, y + 50, 1180, 620);
-                    gCtx.fillStyle = "#555";
-                    gCtx.font = "bold 60px Arial";
-                    gCtx.textAlign = "center";
-                    gCtx.fillText("TIDAK ADA FOTO", x + 640, y + 360);
+        Promise.all(loads).then(res => {
+            res.forEach(item => {
+                const x = (item.i % 2) * 1280; const y = Math.floor(item.i / 2) * 720;
+                if (item.img) gCtx.drawImage(item.img, x, y, 1280, 720);
+                else {
+                    gCtx.strokeStyle = "#444"; gCtx.strokeRect(x+50, y+50, 1180, 620);
+                    gCtx.fillStyle = "#555"; gCtx.font = "bold 60px Arial"; gCtx.textAlign = "center";
+                    gCtx.fillText("TIDAK ADA FOTO", x+640, y+360);
                 }
             });
-
-            const gridDataURL = gridCanvas.toDataURL('image/jpeg', 0.9);
             const link = document.createElement('a');
-            link.href = gridDataURL;
+            link.href = gCanvas.toDataURL('image/jpeg', 0.9);
             link.download = `KOLASE_${kode}_${new Date().getTime()}.jpg`;
             link.click();
-            alert("KOLASE TERSIMPAN DI HP!");
-            statusTxt.innerText = "Selesai.";
+            alert("KOLASE BERHASIL DISIMPAN!");
         });
     }
-    
+
+    function kirimKeDrive() {
+        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
+        const tahap = document.getElementById('tahap').value;
+        statusTxt.innerText = "Mengirim...";
+        btnSend.disabled = true;
+        fetch(GAS_URL, {
+            method: "POST", mode: "no-cors",
+            body: JSON.stringify({ tahap, kodeToko: kode, foto: preview.src })
+        }).then(() => {
+            alert("SUKSES!");
+            if (tahap === "SESUDAH") localStorage.removeItem("foto_mtc_" + kode);
+            location.reload();
+        }).catch(() => { alert("Gagal!"); btnSend.disabled = false; });
+    }
+
     window.onload = toggleGhost;
 </script>
 </body>
