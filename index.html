@@ -42,15 +42,12 @@
 
 <div class="header">MTC PRESISI - KORWIL</div>
 
-<div class="container">
-    <div class="form-group">
-        <label>Tahap Pekerjaan:</label>
-        <select id="tahap" onchange="toggleGhost()">
-            <option value="SEBELUM">FOTO SEBELUM</option>
-            <option value="PROSES">FOTO PROSES</option>
-            <option value="SESUDAH">FOTO SESUDAH</option>
-        </select>
-    </div>
+<div class="form-group">
+    <label>Kode Toko (Wajib Diisi)*:</label>
+    <input list="listToko" id="kodeToko" placeholder="Pilih/Ketik Kode..." oninput="updateNamaToko()" onfocus="muatDaftarToko()" required>
+    <datalist id="listToko"></datalist>
+    <div id="displayNama">-- Nama Toko Akan Muncul --</div>
+</div>
 
     <div class="form-group">
         <label>Kode Toko (Dropdown/Ketik):</label>
@@ -108,14 +105,21 @@
     }
 
     function updateNamaToko() {
-        const input = document.getElementById('kodeToko').value.toUpperCase();
-        const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
-        if (ketemu) {
-            displayNama.innerText = "Toko: " + ketemu.nama;
-        } else {
-            displayNama.innerText = "-- Kode Tidak Dikenal --";
-        }
+    const input = document.getElementById('kodeToko').value.toUpperCase();
+    // Mencari apakah kode yang diketik ada di daftar yang ditarik dari Spreadsheet
+    const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
+    
+    if (input === "") {
+        displayNama.innerText = "-- Nama Toko Akan Muncul --";
+        displayNama.style.color = "#ffc107"; // Warna kuning standby
+    } else if (ketemu) {
+        displayNama.innerText = "Toko: " + ketemu.nama;
+        displayNama.style.color = "#28a745"; // Warna hijau jika valid
+    } else {
+        displayNama.innerText = "-- Kode Tidak Dikenal --";
+        displayNama.style.color = "#dc3545"; // Warna merah jika salah
     }
+}
 
     async function handleKamera() {
         if (!streamAktif) {
@@ -165,29 +169,57 @@
     }
 
     function kirimKeDrive() {
-        const kode = document.getElementById('kodeToko').value;
-        if(displayNama.innerText.includes("Tidak Dikenal")) return alert("Kode Toko salah!");
+    // Ambil data dari input
+    const kode = document.getElementById('kodeToko').value.trim();
+    const infoNama = document.getElementById('displayNama').innerText;
+    const tahap = document.getElementById('tahap').value;
 
-        statusTxt.innerText = "Mengirim...";
-        btnSend.disabled = true;
-
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({
-                tahap: document.getElementById('tahap').value,
-                kodeToko: kode,
-                foto: preview.src
-            })
-        }).then(() => {
-            alert("Berhasil Terkirim!");
-            if (document.getElementById('tahap').value === "SEBELUM") fotoSebelumnya = preview.src;
-            location.reload();
-        }).catch(() => {
-            alert("Gagal Kirim!");
-            btnSend.disabled = false;
-        });
+    // --- MULAI VALIDASI AKHIR ---
+    
+    // 1. Validasi: Jika kode kosong, hentikan proses
+    if (!kode) {
+        alert("Peringatan: KODE TOKO tidak boleh kosong!");
+        document.getElementById('kodeToko').focus();
+        return;
     }
+
+    // 2. Validasi: Jika nama toko tidak muncul (salah ketik), hentikan proses
+    if (infoNama.includes("Tidak Dikenal") || infoNama.includes("Akan Muncul")) {
+        alert("Peringatan: KODE TOKO tidak valid atau belum terdaftar di sistem Korwil!");
+        document.getElementById('kodeToko').focus();
+        return;
+    }
+
+    // --- AKHIR VALIDASI AKHIR ---
+
+    // Jika lolos semua pengecekan di atas, baru jalankan proses kirim
+    statusTxt.innerText = "Sedang mengirim ke Drive...";
+    btnSend.disabled = true;
+
+    fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            tahap: tahap,
+            kodeToko: kode,
+            foto: preview.src
+        })
+    }).then(() => {
+        alert("Laporan Berhasil Terkirim ke Folder: " + infoNama.replace("Toko: ", ""));
+        
+        // Logika Ghost Overlay: Simpan foto jika ini tahap SEBELUM
+        if (tahap === "SEBELUM") {
+            fotoSebelumnya = preview.src;
+        }
+        
+        // Refresh halaman agar bersih untuk foto berikutnya
+        location.reload();
+    }).catch(e => {
+        alert("Gagal mengirim data. Cek sinyal Lampung!");
+        btnSend.disabled = false;
+        statusTxt.innerText = "Gagal kirim, coba lagi.";
+    });
+}
 </script>
 </body>
 </html>
