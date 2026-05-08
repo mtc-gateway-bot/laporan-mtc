@@ -3,67 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ACL FOTO PEKERJAAN v1.0</title>
+    <title>ACL FOTO PEKERJAAN v1.5</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #121212; color: white; text-align: center; display: flex; flex-direction: column; min-height: 100vh; }
-        .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; position: sticky; top: 0; z-index: 100; }
-        .container { padding: 15px; flex: 1; max-width: 450px; margin: auto; width: 100%; box-sizing: border-box; }
+        /* TEMA PUTIH POLOS */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; background: #ffffff; color: #333; text-align: center; display: flex; flex-direction: column; min-height: 100vh; }
+        .header { background: #007bff; padding: 15px; font-weight: bold; font-size: 1.1em; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { padding: 10px; flex: 1; max-width: 500px; margin: auto; width: 100%; box-sizing: border-box; }
         
         .form-group { width: 100%; margin-bottom: 15px; text-align: left; }
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px; }
-        input:disabled { background: #333; cursor: wait; }
-        #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; }
+        label { font-size: 12px; color: #666; margin-left: 5px; font-weight: bold; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #eee; background: #f9f9f9; color: #333; box-sizing: border-box; font-size: 16px; outline: none; margin-top: 5px; }
+        input:focus { border-color: #007bff; background: #fff; }
+        #displayNama { margin-top: 5px; font-size: 13px; color: #007bff; font-weight: bold; text-align: center; min-height: 18px; }
         
-        /* SLOT GRID MENU UTAMA MENJADI PORTRAIT */
-        .slot-grid { aspect-ratio: 3/4; background: #1e1e1e; border: 2px dashed #444; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 10px; cursor: pointer; }
-        /* Gambar visual slot menggunakan Contain agar foto tidak kepotong */
-        .slot-grid img { width: 100%; height: 100%; object-fit: contain; background: #000; }
-        .slot-label { font-size: 11px; color: #aaa; position: absolute; font-weight: bold; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 4px; }
+        /* GRID KOTAK DENGAN BORDER HALUS */
+        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .slot-grid { aspect-ratio: 3/4; background: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.3s; }
+        .slot-grid:active { transform: scale(0.98); }
+        .slot-grid img { width: 100%; height: 100%; object-fit: contain; }
+        .slot-label { font-size: 10px; color: #666; position: absolute; font-weight: bold; text-transform: uppercase; }
 
-        /* KAMERA FULLSCREEN OVERLAY PORTRAIT */
+        /* KAMERA PANEL */
         #camContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: none; flex-direction: column; }
-        .cam-view { flex: 1; position: relative; overflow: hidden; background: #000; }
-        /* Video & Preview Menggunakan Cover agar full di HP */
-        video, #preview { width: 100%; height: 100%; object-fit: cover; }
-        #preview { display: none; }
-        #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.3; display: none; pointer-events: none; }
+        .cam-view { flex: 1; position: relative; overflow: hidden; }
+        video, #preview { width: 100%; height: 100%; object-fit: contain; }
         
-        /* Panel Tombol Bawah Terpisah */
-        .cam-bottom-panel { height: 130px; background: #121212; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-top: 1px solid #222; }
-        
-        .btn-capture { background: white; border-radius: 50%; width: 70px; height: 70px; border: 6px solid #007bff; cursor: pointer; outline: none; }
-        .btn-capture:active { background: #ccc; }
-        .btn-action { padding: 16px; width: 90%; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 14px; }
-        .btn-close { position: absolute; top: 20px; right: 20px; background: rgba(220,53,69,0.9); color: white; width: 45px; height: 45px; border-radius: 50%; border: none; z-index: 10005; font-size: 20px; font-weight: bold; }
+        .cam-bottom-panel { height: 140px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid #eee; }
+        .btn-capture { background: white; border-radius: 50%; width: 70px; height: 70px; border: 5px solid #007bff; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .btn-action { padding: 15px; width: 85%; border-radius: 10px; font-weight: bold; border: none; font-size: 14px; cursor: pointer; }
+        .btn-close { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; z-index: 10005; font-size: 18px; font-weight: bold; }
 
-        #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10010; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10010; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div id="loaderOverlay"><div class="spinner"></div><div id="loaderText" style="margin-top:15px; color:#007bff; font-weight: bold;">Processing...</div></div>
+<div id="loaderOverlay"><div class="spinner"></div><div id="loaderText" style="margin-top:10px; color:#007bff; font-weight:bold;">Memproses...</div></div>
 
 <div class="header">ACL FOTO PEKERJAAN</div>
 
 <div class="container">
     <div class="form-group">
-        <label style="font-size: 12px; color: #888;">Kode Toko:</label>
-        <input list="listToko" id="kodeToko" placeholder="Sinkronisasi data..." oninput="updateNamaToko()" disabled>
+        <label>Kode Toko :</label>
+        <input list="listToko" id="kodeToko" placeholder="Masukkan Kode Toko..." oninput="updateNamaToko()" disabled>
         <datalist id="listToko"></datalist>
-        <div id="displayNama">Memuat database Korwil...</div>
+        <div id="displayNama">Menunggu Database...</div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px;">
+    <div class="photo-grid">
         <div class="slot-grid" onclick="pilihTahap(0, 'FOTO SEBELUM')"><img id="slot-0" style="display:none;"><span class="slot-label">SEBELUM</span></div>
         <div class="slot-grid" onclick="pilihTahap(1, 'FOTO PROSES 1')"><img id="slot-1" style="display:none;"><span class="slot-label">PROSES 1</span></div>
         <div class="slot-grid" onclick="pilihTahap(2, 'FOTO PROSES 2')"><img id="slot-2" style="display:none;"><span class="slot-label">PROSES 2</span></div>
         <div class="slot-grid" onclick="pilihTahap(3, 'FOTO SESUDAH')"><img id="slot-3" style="display:none;"><span class="slot-label">SESUDAH</span></div>
     </div>
     
-    <button id="btn-save-all" onclick="buatKolase()" style="width:100%; padding:18px; background:#17a2b8; color:white; border:none; border-radius:12px; font-weight:bold; display:none; font-size:16px;">DOWNLOAD KOLASE PORTRAIT</button>
+    <button id="btn-save-all" onclick="buatKolase()" style="margin-top:25px; width:100%; padding:18px; background:#28a745; color:white; border:none; border-radius:12px; font-weight:bold; display:none; font-size:16px; box-shadow: 0 4px 10px rgba(40,167,69,0.3);">DOWNLOAD KOLASE</button>
 </div>
 
 <div id="camContainer">
@@ -71,13 +68,12 @@
     <div class="cam-view">
         <video id="video" autoplay playsinline></video>
         <img id="preview">
-        <img id="ghost">
     </div>
     <div class="cam-bottom-panel">
-        <div id="labelCam" style="font-size:13px; color:#007bff; font-weight:bold; text-transform: uppercase;"></div>
+        <div id="labelCam" style="font-size:12px; color:#007bff; font-weight:bold; text-transform:uppercase;"></div>
         <button class="btn-capture" id="btn-snap" onclick="tangkapFoto()"></button>
-        <button class="btn-action" id="btn-kirim" style="display:none; background:#28a745; color:white;" onclick="kirimKeDrive()">KIRIM KE DRIVE</button>
-        <button class="btn-action" id="btn-ulang" style="display:none; background:#dc3545; color:white; margin-top:5px;" onclick="bukaKamera()">ULANGI FOTO</button>
+        <button class="btn-action" id="btn-kirim" style="display:none; background:#007bff; color:white;" onclick="kirimKeDrive()">GUNAKAN FOTO</button>
+        <button class="btn-action" id="btn-ulang" style="display:none; background:#f0f0f0; color:#333; margin-top:5px;" onclick="bukaKamera()">AMBIL ULANG</button>
     </div>
 </div>
 
@@ -85,7 +81,6 @@
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
-    
     let daftarToko = [], streamAktif = null, koleksiFoto = [null, null, null, null], logWaktu = [null, null, null, null];
     let slotDipilih = null, namaTahapDipilih = "", isTokoValid = false;
 
@@ -98,22 +93,16 @@
             const l = document.getElementById('listToko');
             daftarToko.forEach(t => { let o = document.createElement('option'); o.value = t.kode; l.appendChild(o); });
             document.getElementById('kodeToko').disabled = false;
-            document.getElementById('kodeToko').placeholder = "Ketik Kode Toko...";
-            document.getElementById('displayNama').innerText = "-- Pilih Toko --";
-        } catch (e) { document.getElementById('displayNama').innerText = "Gagal Sinkron!"; }
+            document.getElementById('displayNama').innerText = "Database Siap";
+        } catch (e) { document.getElementById('displayNama').innerText = "Gagal Sinkron Database!"; }
     }
 
     function updateNamaToko() {
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
         const t = daftarToko.find(x => x.kode.toUpperCase() === kode);
         const d = document.getElementById('displayNama');
-        if(t) { d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; isTokoValid = true; muatFotoLokal(kode); }
-        else { d.innerText = "-- Kode Belum Terdaftar --"; d.style.color = "#dc3545"; isTokoValid = false; }
-    }
-
-    function muatFotoLokal(kode) {
-        const s = localStorage.getItem("foto_mtc_" + kode);
-        if(s) { koleksiFoto[0] = s; const img = document.getElementById('slot-0'); img.src = s; img.style.display = "block"; document.querySelectorAll('.slot-label')[0].style.display = "none"; }
+        if(t) { d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; isTokoValid = true; }
+        else { d.innerText = "Cari Kode Toko..."; d.style.color = "#888"; isTokoValid = false; }
     }
 
     function pilihTahap(idx, nama) {
@@ -122,9 +111,6 @@
         document.getElementById('camContainer').style.display = "flex";
         document.getElementById('labelCam').innerText = nama;
         bukaKamera();
-        const sblm = localStorage.getItem("foto_mtc_" + document.getElementById('kodeToko').value.toUpperCase());
-        if(nama === "FOTO SESUDAH" && sblm) { document.getElementById('ghost').src = sblm; document.getElementById('ghost').style.display = "block"; }
-        else { document.getElementById('ghost').style.display = "none"; }
     }
 
     async function bukaKamera() {
@@ -134,8 +120,7 @@
         document.getElementById('btn-kirim').style.display = "none";
         document.getElementById('btn-ulang').style.display = "none";
         if (!streamAktif) {
-            // Minta resolusi Full HD Portrait jika didukung
-            streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } });
+            streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: {ideal: 1280}, height: {ideal: 720} } });
             document.getElementById('video').srcObject = streamAktif;
         }
     }
@@ -145,56 +130,37 @@
         document.getElementById('camContainer').style.display = "none";
     }
 
-    // FUNGSI TIMESTAMP BARU
-    function getTimestampString() {
-        const skrg = new Date();
-        const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-        return `${skrg.getDate()} ${bulan[skrg.getMonth()]} ${skrg.getFullYear()} ${skrg.getHours().toString().padStart(2,'0')}:${skrg.getMinutes().toString().padStart(2,'0')}:${skrg.getSeconds().toString().padStart(2,'0')}`;
-    }
-
     function tangkapFoto() {
         const v = document.getElementById('video'), c = document.getElementById('canvas'), ctx = c.getContext('2d');
-        let iw = v.videoWidth, ih = v.videoHeight;
-        
-        // Atur ukuran canvas sama dengan resolusi asli video
-        c.width = iw; c.height = ih;
+        let w = v.videoWidth, h = v.videoHeight;
+        c.width = w; c.height = h;
         ctx.drawImage(v, 0, 0);
 
-        // Ambil Data Gambar untuk deteksi Landscape
-        const tglStr = getTimestampString();
+        const skrg = new Date();
+        const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+        const tglStr = `${skrg.getDate()} ${bulan[skrg.getMonth()]} ${skrg.getFullYear()} ${skrg.getHours().toString().padStart(2,'0')}:${skrg.getMinutes().toString().padStart(2,'0')}:${skrg.getSeconds().toString().padStart(2,'0')}`;
         logWaktu[slotDipilih] = tglStr;
 
-        // CETAK TIMESTAMP ASLI SEBELUM ROTASI (Putih, Stroke Hitam, Kecil)
-        ctx.font = "bold 26px monospace";
-        ctx.textAlign = "left";
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "black";
-        ctx.strokeText(tglStr + " WIB", 25, c.height - 30);
-        ctx.fillStyle = "white";
-        ctx.fillText(tglStr + " WIB", 25, c.height - 30);
+        // TIMESTAMP (Sesuai permintaan: Kecil, Putih, Stroke Hitam)
+        ctx.font = "bold 22px monospace";
+        ctx.lineWidth = 4; ctx.strokeStyle = "black";
+        ctx.strokeText(tglStr + " WIB", 20, h - 25);
+        ctx.fillStyle = "white"; ctx.fillText(tglStr + " WIB", 20, h - 25);
 
-        // LOGIKA AUTO-ROTASI JIKA LANDSCAPE
-        // Jika lebar > tinggi, berarti HP dimiringkan (Landscape)
-        if (iw > ih) {
-            // Buat canvas sementara untuk rotasi
+        // AUTO ROTASI LANDSCAPE KE PORTRAIT (Anti-Gepeng)
+        let finalImage;
+        if (w > h) {
             const rCvs = document.createElement('canvas');
             const rCtx = rCvs.getContext('2d');
-            // Tukar lebar dan tinggi
-            rCvs.width = ih;
-            rCvs.height = iw;
-            
-            // Putar 90 derajat searah jarum jam
-            rCtx.translate(ih, 0);
-            rCtx.rotate(90 * Math.PI / 180);
+            rCvs.width = h; rCvs.height = w;
+            rCtx.translate(h, 0); rCtx.rotate(90 * Math.PI / 180);
             rCtx.drawImage(c, 0, 0);
-            
-            // Masukkan hasil rotasi ke preview
-            document.getElementById('preview').src = rCvs.toDataURL('image/jpeg', 0.8);
+            finalImage = rCvs.toDataURL('image/jpeg', 0.8);
         } else {
-            // Jika sudah portrait, langsung masukkan
-            document.getElementById('preview').src = c.toDataURL('image/jpeg', 0.8);
+            finalImage = c.toDataURL('image/jpeg', 0.8);
         }
 
+        document.getElementById('preview').src = finalImage;
         document.getElementById('preview').style.display = "block";
         v.style.display = "none";
         document.getElementById('btn-snap').style.display = "none";
@@ -208,7 +174,6 @@
         loader.style.display = "flex";
         fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: document.getElementById('preview').src, waktu: logWaktu[slotDipilih] }) })
         .then(() => {
-            if(namaTahapDipilih === "FOTO SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
             isiSlotVisual(document.getElementById('preview').src, slotDipilih);
             loader.style.display = "none"; tutupKamera();
         });
@@ -218,22 +183,11 @@
         koleksiFoto[idx] = data;
         const s = document.getElementById('slot-'+idx);
         s.src = data; s.style.display = "block";
+        const grid = document.querySelectorAll('.slot-grid')[idx];
+        grid.style.border = "2px solid #28a745";
+        grid.style.background = "#fff";
         document.querySelectorAll('.slot-label')[idx].style.display = "none";
         document.getElementById('btn-save-all').style.display = "block";
-    }
-
-    // FUNGSI FIT (CONTAIN) UNTUK KOLASE PORTRAIT
-    function drawImageFitPortrait(ctx, img, x, y, w, h) {
-        let iw = img.width, ih = img.height;
-        // Karena ini kolase portrait, pastikan kita membandingkan dengan benar
-        let r = Math.min(w / iw, h / ih);
-        let nw = iw * r, nh = ih * r;
-        let cx = x + (w - nw) / 2;
-        let cy = y + (h - nh) / 2;
-        
-        ctx.fillStyle = "#000"; // Background hitam jika foto landscape masuk tanpa rotasi (safety)
-        ctx.fillRect(x, y, w, h);
-        ctx.drawImage(img, 0, 0, iw, ih, cx, cy, nw, nh);
     }
 
     function buatKolase() {
@@ -241,11 +195,9 @@
         const kode = document.getElementById('kodeToko').value.toUpperCase();
         loader.style.display = "flex";
         
-        // CANVAS KOLASE MENJADI PORTRAIT (Memanjang ke bawah)
-        // Ukuran 4 Foto Portrait berjejer ke bawah
-        const c = document.createElement('canvas'); const ctx = c.getContext('2d');
-        c.width = 1200; // Lebar 1 foto Portrait HD
-        c.height = 1600 * 4 + 100; // Tinggi 4 Foto + Header
+        const c = document.createElement('canvas');
+        const ctx = c.getContext('2d');
+        c.width = 1600; c.height = 2200; // Layout Kolase 2x2
         ctx.fillStyle = "white"; ctx.fillRect(0,0,c.width,c.height);
         
         const loads = koleksiFoto.map((s, i) => new Promise(res => {
@@ -254,25 +206,31 @@
 
         Promise.all(loads).then(res => {
             res.forEach(item => {
-                // Posisi Y berurutan ke bawah
-                const y = item.i * 1600 + 90;
+                const col = item.i % 2;
+                const row = Math.floor(item.i / 2);
+                const x = col * 800 + 10;
+                const y = row * 1050 + 100;
+                
                 if(item.img) {
-                    // Masukkan utuh (Contain) ke kotak portrait kolase
-                    drawImageFitPortrait(ctx, item.img, 10, y, 1180, 1580);
-                } else {
-                    ctx.fillStyle = "#eee"; ctx.fillRect(10, y, 1180, 1580);
-                    ctx.fillStyle = "#ccc"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center";
-                    ctx.fillText("KOSONG", 600, y + 790);
+                    let iw = item.img.width, ih = item.img.height;
+                    let r = Math.min(780 / iw, 1000 / ih);
+                    let nw = iw * r, nh = ih * r;
+                    let cx = x + (780 - nw) / 2;
+                    let cy = y + (1000 - nh) / 2;
+                    ctx.fillStyle = "#f9f9f9";
+                    ctx.fillRect(x, y, 780, 1000);
+                    ctx.drawImage(item.img, 0, 0, iw, ih, cx, cy, nw, nh);
                 }
             });
             
-            // Header Kolase Portrait
             ctx.fillStyle = "#007bff"; ctx.fillRect(0, 0, c.width, 80);
-            ctx.fillStyle = "white"; ctx.font = "bold 35px Arial"; ctx.textAlign = "left";
-            ctx.fillText(`ACL FOTO PORTRAIT: ${kode} - ${document.getElementById('displayNama').innerText}`, 20, 53);
+            ctx.fillStyle = "white"; ctx.font = "bold 30px Arial";
+            ctx.fillText(`KOLASE LAPORAN: ${kode} - ${document.getElementById('displayNama').innerText}`, 20, 50);
             
-            const l = document.createElement('a'); l.href = c.toDataURL('image/jpeg', 0.9);
-            l.download = `KOLASE_PORTRAIT_${kode}.jpg`; l.click();
+            const l = document.createElement('a');
+            l.href = c.toDataURL('image/jpeg', 0.9);
+            l.download = `KOLASE_${kode}.jpg`;
+            l.click();
             loader.style.display = "none";
         });
     }
