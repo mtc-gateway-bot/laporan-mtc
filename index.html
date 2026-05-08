@@ -62,7 +62,7 @@
 </head>
 <body>
 
-<div class="header">SISTEM MONITORING KORWIL</div>
+<div class="header">LAPORAN FOTO PEKERJAAN</div>
 
 <div class="container">
     <div class="form-group">
@@ -75,7 +75,7 @@
     </div>
 
     <div class="form-group">
-        <label>Kode Toko (Wajib Diisi)*:</label>
+        <label>Kode Toko (Wajib isi)*:</label>
         <input list="listToko" id="kodeToko" placeholder="Pilih atau Ketik Kode..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
         <datalist id="listToko"></datalist>
         <div id="displayNama">-- Nama Toko Akan Muncul --</div>
@@ -157,7 +157,7 @@
                 const constraints = { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
                 streamAktif = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = streamAktif;
-                btnMain.innerText = "JEPRET FOTO";
+                btnMain.innerText = "AMBIL FOTO";
                 statusTxt.innerText = "Kamera Aktif.";
                 toggleGhost();
             } catch (e) { 
