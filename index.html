@@ -88,17 +88,17 @@
     <div style="width: 100%; margin-bottom: 15px;">
         <label>Pilih Slot untuk Ambil Foto:</label>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-            <div class="slot-grid" id="box-0" onclick="pilihTahap(0, 'SEBELUM')">
-                <img id="slot-0" style="display:none;"><span id="label-0" class="slot-label">SEBELUM</span>
+            <div class="slot-grid" id="box-0" onclick="pilihTahap(0, 'FOTO SEBELUM')">
+                <img id="slot-0" style="display:none;"><span id="label-0" class="slot-label">FOTO SEBELUM</span>
             </div>
-            <div class="slot-grid" id="box-1" onclick="pilihTahap(1, 'PROSES')">
-                <img id="slot-1" style="display:none;"><span id="label-1" class="slot-label">PROSES 1</span>
+            <div class="slot-grid" id="box-1" onclick="pilihTahap(1, 'FOTO PROSES')">
+                <img id="slot-1" style="display:none;"><span id="label-1" class="slot-label">FOTO PROSES 1</span>
             </div>
-            <div class="slot-grid" id="box-2" onclick="pilihTahap(2, 'PROSES')">
-                <img id="slot-2" style="display:none;"><span id="label-2" class="slot-label">PROSES 2</span>
+            <div class="slot-grid" id="box-2" onclick="pilihTahap(2, 'FOTO PROSES')">
+                <img id="slot-2" style="display:none;"><span id="label-2" class="slot-label">FOTO PROSES 2</span>
             </div>
-            <div class="slot-grid" id="box-3" onclick="pilihTahap(3, 'SESUDAH')">
-                <img id="slot-3" style="display:none;"><span id="label-3" class="slot-label">SESUDAH</span>
+            <div class="slot-grid" id="box-3" onclick="pilihTahap(3, 'FOTO SESUDAH')">
+                <img id="slot-3" style="display:none;"><span id="label-3" class="slot-label">FOTO SESUDAH</span>
             </div>
         </div>
         <button onclick="buatKolase()" id="btn-save-all" style="margin-top: 15px; background: #17a2b8; color: white; display: none;">
@@ -200,7 +200,7 @@
         document.getElementById('btnGroupUI').style.display = "block";
         bukaKamera();
         const sblm = localStorage.getItem("foto_mtc_" + kode.toUpperCase());
-        if(nama === "SESUDAH" && sblm) { ghost.src = sblm; ghost.style.display = "block"; } else { ghost.style.display = "none"; }
+        if(nama === "FOTO SESUDAH" && sblm) { ghost.src = sblm; ghost.style.display = "block"; } else { ghost.style.display = "none"; }
         document.getElementById('camUI').scrollIntoView({behavior: 'smooth'});
     }
 
@@ -236,7 +236,7 @@
         .then(() => {
             document.getElementById('percentText').innerText = "100%";
             setTimeout(() => {
-                if(namaTahapDipilih === "SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
+                if(namaTahapDipilih === "FOTO SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
                 isiSlotVisual(document.getElementById('preview').src, slotDipilih);
                 setLoading(false);
                 tunjukkanNotif("Sukses", "Laporan berhasil terkirim!");
