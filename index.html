@@ -3,56 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MTC Monitoring Lampung</title>
+    <title>MTC Monitoring Lampung v3</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #121212; color: white; text-align: center; }
         .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .container { padding: 15px; display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto; }
-        .form-group { width: 100%; margin-bottom: 15px; text-align: left; }
+        .form-group { width: 100%; margin-bottom: 20px; text-align: left; }
         label { font-size: 13px; color: #bbb; margin-bottom: 8px; display: block; font-weight: 500; }
-        select, input { 
+        input { 
             width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; 
-            background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px;
-            outline: none; transition: border 0.3s;
+            background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px; outline: none;
         }
         #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
         
-        /* Grid Slot */
-        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
-        .slot-grid.active { border: 2px solid #ffc107; background: #332b00; }
+        /* Grid Slot Styles */
+        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.3s; }
+        .slot-grid.active { border: 2px solid #007bff; background: #002b55; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
         .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
-        .slot-label { font-size: 10px; color: #888; position: absolute; font-weight: bold; text-transform: uppercase; }
+        .slot-label { font-size: 10px; color: #888; position: absolute; font-weight: bold; text-transform: uppercase; padding: 4px 8px; background: rgba(0,0,0,0.5); border-radius: 4px; }
 
-        /* Camera Box */
-        .camera-box { 
-            position: relative; width: 100%; height: 380px; 
-            background: #000; border: 2px solid #333; border-radius: 15px; 
-            overflow: hidden; margin-top: 10px;
-        }
+        .camera-box { position: relative; width: 100%; height: 350px; background: #000; border: 2px solid #333; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
         #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.35; display: none; pointer-events: none; }
         
-        .btn-group { margin-top: 20px; width: 100%; }
+        .btn-group { margin-top: 15px; width: 100%; display: none; }
         button { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
-        #btn-main { background: #ffc107; color: black; }
-        #btn-send { background: #28a745; color: white; display: none; }
-        #btn-retry { background: #6c757d; color: white; display: none; }
+        .btn-capture { background: #ffc107; color: black; }
+        .btn-send { background: #28a745; color: white; display: none; }
+        .btn-retry { background: #6c757d; color: white; display: none; }
 
-        /* CUSTOM NOTIFIKASI MENGAMBANG (MODAL) */
-        #customAlert {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center;
-            z-index: 9999; padding: 20px; box-sizing: border-box;
-        }
-        .alert-box {
-            background: #222; border: 2px solid #007bff; border-radius: 15px;
-            padding: 25px; width: 100%; max-width: 300px; box-shadow: 0 0 20px rgba(0,123,255,0.4);
-        }
-        .alert-box h3 { margin: 0 0 15px 0; font-size: 18px; color: #ffc107; }
-        .alert-box p { font-size: 14px; margin-bottom: 20px; line-height: 1.5; color: #eee; }
-        .alert-btns { display: flex; gap: 10px; }
-        .alert-btns button { margin: 0; padding: 12px; flex: 1; font-size: 14px; }
+        /* Custom Modal */
+        #customAlert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; box-sizing: border-box; }
+        .alert-box { background: #222; border: 2px solid #007bff; border-radius: 15px; padding: 25px; width: 100%; max-width: 300px; }
+        .alert-box h3 { margin: 0 0 10px 0; color: #ffc107; font-size: 18px; }
+        .alert-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .alert-btns button { padding: 12px; font-size: 14px; margin: 0; }
         .btn-ok { background: #28a745; color: white; }
         .btn-cancel { background: #dc3545; color: white; }
 
@@ -62,51 +48,50 @@
 <body>
 
 <div id="customAlert">
-    <div class="alert-box" id="alertContent">
-        </div>
+    <div class="alert-box" id="alertContent"></div>
 </div>
 
 <div class="header">MTC MONITORING LAMPUNG</div>
 
 <div class="container">
     <div class="form-group">
-        <label>Tahap Pekerjaan:</label>
-        <select id="tahap" onchange="toggleGhost()">
-            <option value="SEBELUM">FOTO SEBELUM</option>
-            <option value="PROSES">FOTO PROSES</option>
-            <option value="SESUDAH">FOTO SESUDAH</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Kode Toko (Wajib isi)*:</label>
-        <input list="listToko" id="kodeToko" placeholder="Pilih atau Ketik Kode..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
+        <label>Kode Toko:</label>
+        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
         <datalist id="listToko"></datalist>
-        <div id="displayNama">-- Nama Toko Akan Muncul --</div>
+        <div id="displayNama">-- Pilih Toko Terlebih Dahulu --</div>
     </div>
 
-    <div id="grid-container" style="display:none; width: 100%; margin-bottom: 15px;">
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-            <div class="slot-grid" id="box-0" onclick="aktifkanSlot(0)"><img id="slot-0" style="display:none;"><span id="label-0" class="slot-label">SEBELUM</span></div>
-            <div class="slot-grid" id="box-1" onclick="aktifkanSlot(1)"><img id="slot-1" style="display:none;"><span id="label-1" class="slot-label">PROSES 1</span></div>
-            <div class="slot-grid" id="box-2" onclick="aktifkanSlot(2)"><img id="slot-2" style="display:none;"><span id="label-2" class="slot-label">PROSES 2</span></div>
-            <div class="slot-grid" id="box-3" onclick="aktifkanSlot(3)"><img id="slot-3" style="display:none;"><span id="label-3" class="slot-label">SESUDAH</span></div>
+    <div style="width: 100%; margin-bottom: 15px;">
+        <label>Pilih Tahap & Ambil Foto:</label>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div class="slot-grid" id="box-0" onclick="pilihTahap(0, 'SEBELUM')">
+                <img id="slot-0" style="display:none;"><span id="label-0" class="slot-label">SEBELUM</span>
+            </div>
+            <div class="slot-grid" id="box-1" onclick="pilihTahap(1, 'PROSES')">
+                <img id="slot-1" style="display:none;"><span id="label-1" class="slot-label">PROSES 1</span>
+            </div>
+            <div class="slot-grid" id="box-2" onclick="pilihTahap(2, 'PROSES')">
+                <img id="slot-2" style="display:none;"><span id="label-2" class="slot-label">PROSES 2</span>
+            </div>
+            <div class="slot-grid" id="box-3" onclick="pilihTahap(3, 'SESUDAH')">
+                <img id="slot-3" style="display:none;"><span id="label-3" class="slot-label">SESUDAH</span>
+            </div>
         </div>
-        <button onclick="buatKolase()" style="margin-top: 12px; background: #17a2b8; color: white; padding: 16px; width: 100%; border-radius: 10px; font-weight: bold; border: none;">
-            GABUNGKAN & SIMPAN KE HP
+        <button onclick="buatKolase()" id="btn-save-all" style="margin-top: 15px; background: #17a2b8; color: white; display: none;">
+            SIMPAN KOLASE KE GALERI
         </button>
     </div>
 
-    <div class="camera-box">
+    <div class="camera-box" id="camUI">
         <video id="video" autoplay playsinline></video>
         <img id="preview" />
         <img id="ghost" src="" />
     </div>
     
-    <div class="btn-group">
-        <button id="btn-main" onclick="handleKamera()">AKTIFKAN KAMERA</button>
-        <button id="btn-send" onclick="kirimKeDrive()">KIRIM LAPORAN</button>
-        <button id="btn-retry" onclick="resetKamera()">AMBIL ULANG</button>
+    <div class="btn-group" id="btnGroupUI">
+        <button class="btn-capture" id="btn-snap" onclick="tangkapFoto()">AMBIL FOTO <span id="labelAktif"></span></button>
+        <button class="btn-send" id="btn-kirim" onclick="kirimKeDrive()">KIRIM LAPORAN KE DRIVE</button>
+        <button class="btn-retry" id="btn-ulang" onclick="bukaKamera()">ULANGI FOTO</button>
     </div>
 </div>
 
@@ -114,220 +99,133 @@
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
-    let daftarToko = []; 
-    let streamAktif = null;
-    let koleksiFoto = [null, null, null, null];
-    let slotManualAktif = null;
+    let daftarToko = [], streamAktif = null, koleksiFoto = [null, null, null, null];
+    let slotDipilih = null, namaTahapDipilih = "";
 
-    const video = document.getElementById('video');
-    const preview = document.getElementById('preview');
-    const ghost = document.getElementById('ghost');
-    const btnMain = document.getElementById('btn-main');
-    const btnSend = document.getElementById('btn-send');
-    const btnRetry = document.getElementById('btn-retry');
-
-    // --- FUNGSI NOTIFIKASI MENGAMBANG ---
-    function tunjukkanNotif(judul, pesan, tipe = "info", callback = null) {
-        const modal = document.getElementById('customAlert');
-        const content = document.getElementById('alertContent');
-        
-        let html = `<h3>${judul}</h3><p>${pesan}</p>`;
-        
-        if (tipe === "confirm") {
-            html += `<div class="alert-btns">
-                        <button class="btn-ok" id="modalOk">YA</button>
-                        <button class="btn-cancel" id="modalNo">BATAL</button>
-                     </div>`;
-        } else {
-            html += `<div class="alert-btns"><button class="btn-ok" id="modalOk">OK</button></div>`;
-        }
-        
-        content.innerHTML = html;
+    function tunjukkanNotif(judul, pesan, tipe = "info", cb = null) {
+        const modal = document.getElementById('customAlert'), content = document.getElementById('alertContent');
+        content.innerHTML = `<h3>${judul}</h3><p>${pesan}</p><div class="alert-btns">
+            <button class="btn-ok" id="mOk">OK</button>${tipe==='confirm'?'<button class="btn-cancel" id="mNo">BATAL</button>':''}</div>`;
         modal.style.display = "flex";
-
-        document.getElementById('modalOk').onclick = () => {
-            modal.style.display = "none";
-            if (callback) callback(true);
-        };
-        
-        if (tipe === "confirm") {
-            document.getElementById('modalNo').onclick = () => {
-                modal.style.display = "none";
-                if (callback) callback(false);
-            };
-        }
-
-        // Auto close jika cuma info sukses
-        if (tipe === "auto") {
-            setTimeout(() => { modal.style.display = "none"; }, 2000);
-        }
+        document.getElementById('mOk').onclick = () => { modal.style.display = "none"; if(cb) cb(true); };
+        if(tipe==='confirm') document.getElementById('mNo').onclick = () => { modal.style.display = "none"; if(cb) cb(false); };
+        if(tipe==='auto') setTimeout(() => { modal.style.display = "none"; }, 1500);
     }
 
-    window.onload = () => { muatDaftarToko(); toggleGhost(); };
-
     async function muatDaftarToko() {
-        try {
-            const res = await fetch(GAS_URL);
-            daftarToko = await res.json();
-            const list = document.getElementById('listToko');
-            list.innerHTML = "";
-            daftarToko.forEach(t => {
-                let opt = document.createElement('option');
-                opt.value = t.kode;
-                list.appendChild(opt);
-            });
-        } catch (e) { tunjukkanNotif("Error", "Gagal sinkron data toko."); }
+        try { const r = await fetch(GAS_URL); daftarToko = await r.json();
+            const l = document.getElementById('listToko'); l.innerHTML = "";
+            daftarToko.forEach(t => { let o = document.createElement('option'); o.value = t.kode; l.appendChild(o); });
+        } catch (e) { tunjukkanNotif("Koneksi", "Gagal muat data toko."); }
     }
 
     function updateNamaToko() {
         const input = document.getElementById('kodeToko').value.trim().toUpperCase();
-        const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
-        const display = document.getElementById('displayNama');
-        if (ketemu) { display.innerText = "Toko: " + ketemu.nama; display.style.color = "#28a745"; }
-        else { display.innerText = "-- Kode Tidak Dikenal --"; display.style.color = "#dc3545"; }
-        toggleGhost();
+        const t = daftarToko.find(x => x.kode.toUpperCase() === input);
+        const d = document.getElementById('displayNama');
+        if(t) { d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; muatFotoLokal(input); }
+        else { d.innerText = "-- Kode Tidak Dikenal --"; d.style.color = "#dc3545"; }
     }
 
-    async function handleKamera() {
+    function muatFotoLokal(kode) {
+        const s = localStorage.getItem("foto_mtc_" + kode);
+        if(s) { koleksiFoto[0] = s; isiSlotVisual(s, 0); }
+    }
+
+    function pilihTahap(idx, nama) {
+        const kode = document.getElementById('kodeToko').value.trim();
+        if(!kode) return tunjukkanNotif("Info", "Isi Kode Toko dulu!");
+        
+        slotDipilih = idx; namaTahapDipilih = nama;
+        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
+        document.getElementById('box-'+idx).classList.add('active');
+        
+        document.getElementById('labelAktif').innerText = `(${nama})`;
+        document.getElementById('camUI').style.display = "block";
+        document.getElementById('btnGroupUI').style.display = "block";
+        bukaKamera();
+        
+        // Logika Ghost Image
+        const sblm = localStorage.getItem("foto_mtc_" + kode.toUpperCase());
+        if(nama === "SESUDAH" && sblm) { ghost.src = sblm; ghost.style.display = "block"; }
+        else { ghost.style.display = "none"; }
+        document.getElementById('camUI').scrollIntoView({behavior: 'smooth'});
+    }
+
+    async function bukaKamera() {
+        document.getElementById('preview').style.display = "none";
+        document.getElementById('video').style.display = "block";
+        document.getElementById('btn-snap').style.display = "block";
+        document.getElementById('btn-kirim').style.display = "none";
+        document.getElementById('btn-ulang').style.display = "none";
         if (!streamAktif) {
-            try {
-                const constraints = { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
-                streamAktif = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = streamAktif;
-                btnMain.innerText = "AMBIL FOTO";
-            } catch (e) { tunjukkanNotif("Izin Kamera", "Akses kamera ditolak!"); }
-        } else { tangkapFoto(); }
-    }
-
-    function aktifkanSlot(index) {
-        slotManualAktif = index;
-        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
-        document.getElementById('box-' + index).classList.add('active');
-        tunjukkanNotif("Mode Edit", "Silakan ambil foto untuk mengganti kotak ini.", "auto");
-        if(!streamAktif) handleKamera();
-        document.querySelector('.camera-box').scrollIntoView({behavior: 'smooth'});
-    }
-
-    function isiSlot(dataURL, index) {
-        koleksiFoto[index] = dataURL;
-        const img = document.getElementById('slot-' + index);
-        img.src = dataURL; img.style.display = "block";
-        document.getElementById('label-' + index).style.display = "none";
-        slotManualAktif = null;
-        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
+            try { streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } });
+                document.getElementById('video').srcObject = streamAktif;
+            } catch (e) { tunjukkanNotif("Kamera", "Akses kamera ditolak!"); }
+        }
     }
 
     function tangkapFoto() {
-        const cvs = document.getElementById('canvas');
-        const ctx = cvs.getContext('2d');
-        cvs.width = video.videoWidth; cvs.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        const dataURL = cvs.toDataURL('image/jpeg', 0.8);
-
-        if (slotManualAktif !== null) { 
-            isiSlot(dataURL, slotManualAktif); 
-            resetKamera(); 
-        } else {
-            preview.src = dataURL;
-            video.style.display = "none"; preview.style.display = "block";
-            btnMain.style.display = "none"; btnSend.style.display = "block"; btnRetry.style.display = "block";
-        }
-    }
-
-    function resetKamera() {
-        video.style.display = "block"; preview.style.display = "none";
-        btnMain.style.display = "block"; btnSend.style.display = "none"; btnRetry.style.display = "none";
-        slotManualAktif = null;
-        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
-    }
-
-    function toggleGhost() {
-        const tahap = document.getElementById('tahap').value;
-        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-        document.getElementById('grid-container').style.display = (tahap !== "SEBELUM") ? "block" : "none";
-        const fSblm = localStorage.getItem("foto_mtc_" + kode);
-        if (fSblm) isiSlot(fSblm, 0);
-        if (tahap === "SESUDAH" && fSblm) { ghost.src = fSblm; ghost.style.display = "block"; }
-        else { ghost.style.display = "none"; }
+        const v = document.getElementById('video'), c = document.getElementById('canvas'), ctx = c.getContext('2d');
+        c.width = v.videoWidth; c.height = v.videoHeight;
+        ctx.drawImage(v, 0, 0);
+        const data = c.toDataURL('image/jpeg', 0.8);
+        document.getElementById('preview').src = data;
+        document.getElementById('preview').style.display = "block";
+        v.style.display = "none";
+        document.getElementById('btn-snap').style.display = "none";
+        document.getElementById('btn-kirim').style.display = "block";
+        document.getElementById('btn-ulang').style.display = "block";
     }
 
     function kirimKeDrive() {
-        const tahap = document.getElementById('tahap').value;
-        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
+        const img = document.getElementById('preview').src;
+        const kode = document.getElementById('kodeToko').value.toUpperCase();
+        tunjukkanNotif("Proses", "Mengirim ke Google Drive...", "info");
         
-        if (tahap === "SEBELUM") {
-            const sdhAda = localStorage.getItem("foto_mtc_" + kode);
-            if (sdhAda) {
-                tunjukkanNotif("Konfirmasi", "Foto SEBELUM sudah ada. Ganti dengan yang baru?", "confirm", (lanjut) => {
-                    if (lanjut) prosesKirim(tahap, kode);
-                    else resetKamera();
-                });
-                return;
-            }
-        }
-        prosesKirim(tahap, kode);
+        fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: img }) })
+        .then(() => {
+            if(namaTahapDipilih === "SEBELUM") localStorage.setItem("foto_mtc_" + kode, img);
+            isiSlotVisual(img, slotDipilih);
+            tunjukkanNotif("Sukses", "Laporan terkirim!", "auto");
+            resetUIKamera();
+        }).catch(() => tunjukkanNotif("Gagal", "Cek koneksi internet!"));
     }
 
-    function prosesKirim(tahap, kode) {
-        tunjukkanNotif("Proses", "Sedang mengirim ke Drive...", "info");
-        fetch(GAS_URL, {
-            method: "POST", mode: "no-cors",
-            body: JSON.stringify({ tahap, kodeToko: kode, foto: preview.src })
-        }).then(() => {
-            if (tahap === "SEBELUM") { 
-                localStorage.setItem("foto_mtc_" + kode, preview.src); 
-                isiSlot(preview.src, 0); 
-            }
-            else if (tahap === "PROSES") { 
-                if (!koleksiFoto[1]) isiSlot(preview.src, 1);
-                else if (!koleksiFoto[2]) isiSlot(preview.src, 2);
-                else isiSlot(preview.src, 1); 
-            }
-            else if (tahap === "SESUDAH") { isiSlot(preview.src, 3); }
-            
-            tunjukkanNotif("Sukses", "Foto berhasil terkirim ke Drive!", "auto");
-            resetKamera(); 
-        }).catch(() => { tunjukkanNotif("Gagal", "Koneksi bermasalah!"); });
+    function isiSlotVisual(data, idx) {
+        koleksiFoto[idx] = data;
+        const s = document.getElementById('slot-'+idx);
+        s.src = data; s.style.display = "block";
+        document.getElementById('label-'+idx).style.display = "none";
+        document.getElementById('btn-save-all').style.display = "block";
+    }
+
+    function resetUIKamera() {
+        document.getElementById('camUI').style.display = "none";
+        document.getElementById('btnGroupUI').style.display = "none";
+        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
     }
 
     function buatKolase() {
-        const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-        if(!kode) { tunjukkanNotif("Info", "Masukkan Kode Toko dulu!"); return; }
-        
-        tunjukkanNotif("Proses", "Membuat kolase...", "auto");
-        const gCvs = document.createElement('canvas');
-        const gCtx = gCvs.getContext('2d');
-        gCvs.width = 2560; gCvs.height = 1440;
-        gCtx.fillStyle = "#1a1a1a"; gCtx.fillRect(0, 0, 2560, 1440);
+        const kode = document.getElementById('kodeToko').value.toUpperCase();
+        tunjukkanNotif("Proses", "Menyusun Kolase...", "auto");
+        const c = document.createElement('canvas'); const ctx = c.getContext('2d');
+        c.width = 2560; c.height = 1440;
+        ctx.fillStyle = "#111"; ctx.fillRect(0,0,2560,1440);
 
-        const loads = koleksiFoto.map((src, i) => {
-            return new Promise(res => {
-                if (src) { const img = new Image(); img.onload = () => res({img, i}); img.src = src; }
-                else res({img: null, i});
-            });
-        });
+        const loads = koleksiFoto.map((s, i) => new Promise(res => {
+            if(s) { const img = new Image(); img.onload = () => res({img, i}); img.src = s; } else res({img:null, i});
+        }));
 
         Promise.all(loads).then(res => {
             res.forEach(item => {
                 const x = (item.i % 2) * 1280, y = Math.floor(item.i / 2) * 720;
-                if (item.img) gCtx.drawImage(item.img, x, y, 1280, 720);
-                else { 
-                    gCtx.fillStyle = "#333"; gCtx.fillRect(x, y, 1280, 720);
-                    gCtx.fillStyle = "#555"; gCtx.font = "bold 60px Arial"; gCtx.textAlign = "center"; 
-                    gCtx.fillText("TIDAK ADA FOTO", x+640, y+360); 
-                }
+                if(item.img) ctx.drawImage(item.img, x, y, 1280, 720);
+                else { ctx.fillStyle = "#333"; ctx.fillRect(x+10, y+10, 1260, 700); ctx.fillStyle = "#555"; ctx.font = "60px Arial"; ctx.textAlign = "center"; ctx.fillText("KOSONG", x+640, y+360); }
             });
-            const link = document.createElement('a');
-            link.href = gCvs.toDataURL('image/jpeg', 0.9);
-            link.download = `KOLASE_${kode}.jpg`;
-            link.click();
-            
-            tunjukkanNotif("Berhasil", "Kolase tersimpan di Galeri. Selesaikan tugas?", "confirm", (lanjut) => {
-                if (lanjut) {
-                    localStorage.removeItem("foto_mtc_" + kode);
-                    location.reload();
-                }
-            });
+            const l = document.createElement('a'); l.href = c.toDataURL('image/jpeg', 0.9);
+            l.download = `KOLASE_${kode}.jpg`; l.click();
+            tunjukkanNotif("Berhasil", "Kolase tersimpan! Mulai baru?", "confirm", (ya) => { if(ya) { localStorage.removeItem("foto_mtc_"+kode); location.reload(); }});
         });
     }
 </script>
