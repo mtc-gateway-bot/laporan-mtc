@@ -20,7 +20,7 @@
         /* Grid Slot Styles */
         .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
         .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
-        .slot-label { font-size: 10px; color: #666; position: absolute; font-weight: bold; }
+        .slot-label { font-size: 10px; color: #888; position: absolute; font-weight: bold; text-transform: uppercase; }
 
         .camera-box { 
             position: relative; width: 100%; height: 380px; 
@@ -31,7 +31,7 @@
         #preview { display: none; }
         #ghost { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; opacity: 0.4; display: none; pointer-events: none; 
+            object-fit: cover; opacity: 0.35; display: none; pointer-events: none; 
         }
         .btn-group { margin-top: 20px; width: 100%; }
         button { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
@@ -44,7 +44,7 @@
 </head>
 <body>
 
-<div class="header">LAPORAN FOTO PEKERJAAN</div>
+<div class="header">MTC MONITORING LAMPUNG</div>
 
 <div class="container">
     <div class="form-group">
@@ -64,27 +64,27 @@
     </div>
 
     <div id="grid-container" style="display:none; width: 100%; margin-bottom: 15px;">
-        <p style="font-size: 12px; color: #ffc107; text-align: left; margin-bottom: 8px;">Klik kotak untuk Kamera/Galeri:</p>
+        <p style="font-size: 12px; color: #ffc107; text-align: left; margin-bottom: 8px;">Klik kotak untuk ganti/isi manual:</p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
             <div class="slot-grid" onclick="pilihFoto(0)">
                 <img id="slot-0" style="display:none;">
-                <span id="label-0" class="slot-label">FOTO 1</span>
+                <span id="label-0" class="slot-label">SEBELUM</span>
             </div>
             <div class="slot-grid" onclick="pilihFoto(1)">
                 <img id="slot-1" style="display:none;">
-                <span id="label-1" class="slot-label">FOTO 2</span>
+                <span id="label-1" class="slot-label">PROSES 1</span>
             </div>
             <div class="slot-grid" onclick="pilihFoto(2)">
                 <img id="slot-2" style="display:none;">
-                <span id="label-2" class="slot-label">FOTO 3</span>
+                <span id="label-2" class="slot-label">PROSES 2</span>
             </div>
             <div class="slot-grid" onclick="pilihFoto(3)">
                 <img id="slot-3" style="display:none;">
-                <span id="label-3" class="slot-label">FOTO 4</span>
+                <span id="label-3" class="slot-label">SESUDAH</span>
             </div>
         </div>
-        <button onclick="buatKolase()" style="margin-top: 12px; background: #17a2b8; color: white; padding: 16px; width: 100%; border-radius: 10px; font-weight: bold; border: none;">
-            GABUNG & SIMPAN KE HP
+        <button onclick="buatKolase()" style="margin-top: 12px; background: #17a2b8; color: white; padding: 16px; width: 100%; border-radius: 10px; font-weight: bold; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            GABUNGKAN & SIMPAN KE HP
         </button>
     </div>
 
@@ -122,8 +122,13 @@
     const statusTxt = document.getElementById('status');
     const displayNama = document.getElementById('displayNama');
 
+    // AUTO SINKRONISASI SAAT BUKA APLIKASI
+    window.onload = () => {
+        muatDaftarToko();
+        toggleGhost();
+    };
+
     async function muatDaftarToko() {
-        if (daftarToko.length > 0) return;
         statusTxt.innerText = "Sinkronisasi data...";
         try {
             const res = await fetch(GAS_URL);
@@ -136,7 +141,7 @@
                 list.appendChild(opt);
             });
             statusTxt.innerText = "Data Siap.";
-        } catch (e) { statusTxt.innerText = "Gagal sinkronisasi."; }
+        } catch (e) { statusTxt.innerText = "Gagal sinkronisasi data."; }
     }
 
     function updateNamaToko() {
@@ -175,7 +180,7 @@
         if (pilihan) {
             document.getElementById('fileInput').click();
         } else {
-            statusTxt.innerText = "Ambil foto untuk Slot " + (index + 1);
+            statusTxt.innerText = "Mengambil foto untuk Slot " + (index + 1);
             if(!streamAktif) handleKamera();
             document.querySelector('.camera-box').scrollIntoView({ behavior: 'smooth' });
         }
@@ -192,7 +197,7 @@
                 const ctx = canvas.getContext('2d');
                 canvas.width = 1280; canvas.height = 720;
                 ctx.drawImage(img, 0, 0, 1280, 720);
-                isiSlot(canvas.toDataURL('image/jpeg', 0.8));
+                isiSlot(canvas.toDataURL('image/jpeg', 0.8), slotAktif);
             };
             img.src = e.target.result;
         };
@@ -200,14 +205,16 @@
         event.target.value = "";
     }
 
-    function isiSlot(dataURL) {
-        koleksiFoto[slotAktif] = dataURL;
-        const imgSlot = document.getElementById('slot-' + slotAktif);
-        imgSlot.src = dataURL;
-        imgSlot.style.display = "block";
-        document.getElementById('label-' + slotAktif).style.display = "none";
+    function isiSlot(dataURL, index) {
+        koleksiFoto[index] = dataURL;
+        const imgSlot = document.getElementById('slot-' + index);
+        const labelSlot = document.getElementById('label-' + index);
+        if (imgSlot) {
+            imgSlot.src = dataURL;
+            imgSlot.style.display = "block";
+            if (labelSlot) labelSlot.style.display = "none";
+        }
         slotAktif = null;
-        statusTxt.innerText = "Foto slot siap.";
     }
 
     function tangkapFoto() {
@@ -222,11 +229,16 @@
         const dataURL = canvas.toDataURL('image/jpeg', 0.8);
 
         if (slotAktif !== null) {
-            isiSlot(dataURL);
+            isiSlot(dataURL, slotAktif);
             resetKamera();
         } else {
             preview.src = dataURL;
-            if (tahap === "SEBELUM") localStorage.setItem("foto_mtc_" + kode, dataURL);
+            if (tahap === "SEBELUM") {
+                localStorage.setItem("foto_mtc_" + kode, dataURL);
+            } else if (tahap === "SESUDAH") {
+                // KUNCI: Foto Sesudah masuk ke SLOT 4
+                isiSlot(dataURL, 3);
+            }
             video.style.display = "none";
             preview.style.display = "block";
             ghost.style.display = "none";
@@ -245,7 +257,16 @@
     function toggleGhost() {
         const tahap = document.getElementById('tahap').value;
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
-        document.getElementById('grid-container').style.display = (tahap === "SESUDAH") ? "block" : "none";
+        const gridCont = document.getElementById('grid-container');
+        
+        if (tahap === "SESUDAH") {
+            gridCont.style.display = "block";
+            // KUNCI: Foto Sebelum masuk ke SLOT 1
+            const fotoSebelum = localStorage.getItem("foto_mtc_" + kode);
+            if (fotoSebelum) isiSlot(fotoSebelum, 0);
+        } else {
+            gridCont.style.display = "none";
+        }
 
         const fotoTersimpan = localStorage.getItem("foto_mtc_" + kode);
         if (tahap === "SESUDAH" && fotoTersimpan && kode !== "") {
@@ -257,6 +278,7 @@
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
         if (!kode) { alert("Isi Kode Toko!"); return; }
         
+        statusTxt.innerText = "Menggabungkan foto...";
         const gCanvas = document.createElement('canvas');
         const gCtx = gCanvas.getContext('2d');
         gCanvas.width = 2560; gCanvas.height = 1440;
@@ -284,6 +306,7 @@
             link.download = `KOLASE_${kode}_${new Date().getTime()}.jpg`;
             link.click();
             alert("KOLASE BERHASIL DISIMPAN!");
+            statusTxt.innerText = "Kolase tersimpan.";
         });
     }
 
@@ -296,13 +319,11 @@
             method: "POST", mode: "no-cors",
             body: JSON.stringify({ tahap, kodeToko: kode, foto: preview.src })
         }).then(() => {
-            alert("SUKSES!");
+            alert("LAPORAN TERKIRIM!");
             if (tahap === "SESUDAH") localStorage.removeItem("foto_mtc_" + kode);
             location.reload();
         }).catch(() => { alert("Gagal!"); btnSend.disabled = false; });
     }
-
-    window.onload = toggleGhost;
 </script>
 </body>
 </html>
