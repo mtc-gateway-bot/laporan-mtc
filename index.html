@@ -5,53 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTC Monitoring Lampung</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #1a1a1a; color: white; text-align: center; }
-        .header { background: #007bff; padding: 15px; font-weight: bold; }
-        .container { padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #121212; color: white; text-align: center; }
+        .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .container { padding: 15px; display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto; }
         
-        .form-group { width: 100%; max-width: 350px; margin-bottom: 12px; text-align: left; }
-        label { font-size: 12px; color: #aaa; margin-bottom: 5px; display: block; }
+        .form-group { width: 100%; margin-bottom: 15px; text-align: left; }
+        label { font-size: 13px; color: #bbb; margin-bottom: 8px; display: block; font-weight: 500; }
+        
         select, input { 
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; 
-            background: #2a2a2a; color: white; box-sizing: border-box; font-size: 16px;
+            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; 
+            background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px;
+            outline: none; transition: border 0.3s;
+        }
+        input:focus { border-color: #007bff; }
+
+        /* Style Khusus Input Kode Toko agar terlihat seperti Dropdown */
+        #kodeToko {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px top 50%;
+            background-size: 12px auto;
         }
 
-        /* Tampilan Nama Toko yang muncul otomatis */
         #displayNama { 
-            margin-top: 5px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em;
+            margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; 
+            min-height: 1.2em; padding-left: 5px;
         }
 
         .camera-box { 
-            position: relative; width: 100%; max-width: 350px; height: 380px; 
-            background: #000; border: 2px solid #333; border-radius: 12px; overflow: hidden; margin-top: 10px;
+            position: relative; width: 100%; height: 380px; 
+            background: #000; border: 2px solid #333; border-radius: 15px; 
+            overflow: hidden; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
-        #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4; display: none; pointer-events: none; }
+        #ghost { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            object-fit: cover; opacity: 0.4; display: none; pointer-events: none; 
+        }
 
-        .btn-group { margin-top: 15px; width: 100%; max-width: 350px; }
-        button { width: 100%; padding: 15px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; margin-bottom: 10px; }
+        .btn-group { margin-top: 20px; width: 100%; }
+        button { 
+            width: 100%; padding: 16px; font-size: 16px; font-weight: bold; 
+            border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+        
         #btn-main { background: #ffc107; color: black; }
         #btn-send { background: #28a745; color: white; display: none; }
         #btn-retry { background: #6c757d; color: white; display: none; }
-        #status { font-size: 12px; color: #888; }
+        
+        #status { font-size: 12px; color: #777; margin-top: 5px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="header">MTC PRESISI - KORWIL</div>
+<div class="header">SISTEM MONITORING KORWIL</div>
 
-<div class="form-group">
-    <label>Kode Toko (Wajib Diisi)*:</label>
-    <input list="listToko" id="kodeToko" placeholder="Pilih/Ketik Kode..." oninput="updateNamaToko()" onfocus="muatDaftarToko()" required>
-    <datalist id="listToko"></datalist>
-    <div id="displayNama">-- Nama Toko Akan Muncul --</div>
-</div>
+<div class="container">
+    <div class="form-group">
+        <label>Tahap Pekerjaan:</label>
+        <select id="tahap" onchange="toggleGhost()">
+            <option value="SEBELUM">FOTO SEBELUM</option>
+            <option value="PROSES">FOTO PROSES</option>
+            <option value="SESUDAH">FOTO SESUDAH</option>
+        </select>
+    </div>
 
     <div class="form-group">
-        <label>Kode Toko (Dropdown/Ketik):</label>
-        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
+        <label>Kode Toko (Wajib Diisi)*:</label>
+        <input list="listToko" id="kodeToko" placeholder="Pilih atau Ketik Kode..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
         <datalist id="listToko"></datalist>
         <div id="displayNama">-- Nama Toko Akan Muncul --</div>
     </div>
@@ -64,16 +89,17 @@
 
     <div class="btn-group">
         <button id="btn-main" onclick="handleKamera()">AKTIFKAN KAMERA</button>
-        <button id="btn-send" onclick="kirimKeDrive()">KIRIM FOTO</button>
-        <button id="btn-retry" onclick="resetKamera()">ULANGI</button>
-        <p id="status">Status: Standby</p>
+        <button id="btn-send" onclick="kirimKeDrive()">KIRIM LAPORAN</button>
+        <button id="btn-retry" onclick="resetKamera()">AMBIL ULANG</button>
+        <p id="status">Status: Menunggu Izin Kamera</p>
     </div>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec"; // GANTI DENGAN URL /exec ANDA
+    // MASUKKAN URL /exec ANDA DI SINI
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
     
     let daftarToko = []; 
     let streamAktif = null;
@@ -88,9 +114,10 @@
     const statusTxt = document.getElementById('status');
     const displayNama = document.getElementById('displayNama');
 
+    // 1. Ambil daftar toko dari Google Sheets (Sheet: Korwil)
     async function muatDaftarToko() {
         if (daftarToko.length > 0) return;
-        statusTxt.innerText = "Sinkronisasi data Korwil...";
+        statusTxt.innerText = "Sinkronisasi data korwil...";
         try {
             const res = await fetch(GAS_URL);
             daftarToko = await res.json();
@@ -100,35 +127,42 @@
                 opt.value = t.kode;
                 list.appendChild(opt);
             });
-            statusTxt.innerText = "Data Toko Terupdate.";
-        } catch (e) { statusTxt.innerText = "Gagal memuat data."; }
+            statusTxt.innerText = "Data Toko Siap.";
+        } catch (e) { 
+            statusTxt.innerText = "Gagal sinkronisasi data."; 
+        }
     }
 
+    // 2. Tampilkan nama toko saat kode diketik
     function updateNamaToko() {
-    const input = document.getElementById('kodeToko').value.toUpperCase();
-    // Mencari apakah kode yang diketik ada di daftar yang ditarik dari Spreadsheet
-    const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
-    
-    if (input === "") {
-        displayNama.innerText = "-- Nama Toko Akan Muncul --";
-        displayNama.style.color = "#ffc107"; // Warna kuning standby
-    } else if (ketemu) {
-        displayNama.innerText = "Toko: " + ketemu.nama;
-        displayNama.style.color = "#28a745"; // Warna hijau jika valid
-    } else {
-        displayNama.innerText = "-- Kode Tidak Dikenal --";
-        displayNama.style.color = "#dc3545"; // Warna merah jika salah
+        const input = document.getElementById('kodeToko').value.trim().toUpperCase();
+        const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
+        
+        if (input === "") {
+            displayNama.innerText = "-- Nama Toko Akan Muncul --";
+            displayNama.style.color = "#ffc107";
+        } else if (ketemu) {
+            displayNama.innerText = "Toko: " + ketemu.nama;
+            displayNama.style.color = "#28a745"; // Hijau jika valid
+        } else {
+            displayNama.innerText = "-- Kode Tidak Dikenal --";
+            displayNama.style.color = "#dc3545"; // Merah jika salah
+        }
     }
-}
 
+    // 3. Fungsi Kamera
     async function handleKamera() {
         if (!streamAktif) {
             try {
-                streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const constraints = { video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } };
+                streamAktif = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = streamAktif;
-                btnMain.innerText = "AMBIL FOTO";
+                btnMain.innerText = "JEPRET FOTO";
+                statusTxt.innerText = "Kamera Aktif.";
                 toggleGhost();
-            } catch (e) { alert("Izin kamera ditolak!"); }
+            } catch (e) { 
+                alert("Mohon izinkan akses kamera!"); 
+            }
         } else {
             tangkapFoto();
         }
@@ -140,10 +174,13 @@
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        preview.src = canvas.toDataURL('image/jpeg', 0.8);
+        
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        preview.src = dataURL;
         
         video.style.display = "none";
         preview.style.display = "block";
+        ghost.style.display = "none";
         btnMain.style.display = "none";
         btnSend.style.display = "block";
         btnRetry.style.display = "block";
@@ -168,58 +205,51 @@
         }
     }
 
+    // 4. KIRIM DATA DENGAN VALIDASI KETAT
     function kirimKeDrive() {
-    // Ambil data dari input
-    const kode = document.getElementById('kodeToko').value.trim();
-    const infoNama = document.getElementById('displayNama').innerText;
-    const tahap = document.getElementById('tahap').value;
+        const kode = document.getElementById('kodeToko').value.trim();
+        const infoNama = displayNama.innerText;
+        const tahap = document.getElementById('tahap').value;
 
-    // --- MULAI VALIDASI AKHIR ---
-    
-    // 1. Validasi: Jika kode kosong, hentikan proses
-    if (!kode) {
-        alert("Peringatan: KODE TOKO tidak boleh kosong!");
-        document.getElementById('kodeToko').focus();
-        return;
-    }
-
-    // 2. Validasi: Jika nama toko tidak muncul (salah ketik), hentikan proses
-    if (infoNama.includes("Tidak Dikenal") || infoNama.includes("Akan Muncul")) {
-        alert("Peringatan: KODE TOKO tidak valid atau belum terdaftar di sistem Korwil!");
-        document.getElementById('kodeToko').focus();
-        return;
-    }
-
-    // --- AKHIR VALIDASI AKHIR ---
-
-    // Jika lolos semua pengecekan di atas, baru jalankan proses kirim
-    statusTxt.innerText = "Sedang mengirim ke Drive...";
-    btnSend.disabled = true;
-
-    fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-            tahap: tahap,
-            kodeToko: kode,
-            foto: preview.src
-        })
-    }).then(() => {
-        alert("Laporan Berhasil Terkirim ke Folder: " + infoNama.replace("Toko: ", ""));
-        
-        // Logika Ghost Overlay: Simpan foto jika ini tahap SEBELUM
-        if (tahap === "SEBELUM") {
-            fotoSebelumnya = preview.src;
+        // Validasi 1: Kode Kosong
+        if (!kode) {
+            alert("Peringatan: KODE TOKO tidak boleh kosong!");
+            document.getElementById('kodeToko').focus();
+            return;
         }
-        
-        // Refresh halaman agar bersih untuk foto berikutnya
-        location.reload();
-    }).catch(e => {
-        alert("Gagal mengirim data. Cek sinyal Lampung!");
-        btnSend.disabled = false;
-        statusTxt.innerText = "Gagal kirim, coba lagi.";
-    });
-}
+
+        // Validasi 2: Kode Tidak Valid/Tidak Ada di Sheet
+        if (infoNama.includes("Tidak Dikenal") || infoNama.includes("Akan Muncul")) {
+            alert("Peringatan: KODE TOKO tidak valid atau belum terdaftar di sistem Korwil!");
+            return;
+        }
+
+        statusTxt.innerText = "Mengirim laporan ke Drive...";
+        btnSend.disabled = true;
+
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                tahap: tahap,
+                kodeToko: kode,
+                foto: preview.src
+            })
+        }).then(() => {
+            alert("SUKSES! Laporan tersimpan di folder: " + infoNama.replace("Toko: ", ""));
+            if (tahap === "SEBELUM") fotoSebelumnya = preview.src;
+            
+            // Reset form untuk foto selanjutnya
+            resetKamera();
+            document.getElementById('kodeToko').value = "";
+            displayNama.innerText = "-- Nama Toko Akan Muncul --";
+            displayNama.style.color = "#ffc107";
+            btnSend.disabled = false;
+        }).catch(e => {
+            alert("Gagal kirim. Cek koneksi internet Anda.");
+            btnSend.disabled = false;
+        });
+    }
 </script>
 </body>
 </html>
