@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MTC Presisi Lampung</title>
+    <title>MTC Monitoring Lampung</title>
     <style>
         body { font-family: sans-serif; margin: 0; background: #1a1a1a; color: white; text-align: center; }
-        .header { background: #007bff; padding: 15px; font-weight: bold; font-size: 1.2em; }
+        .header { background: #007bff; padding: 15px; font-weight: bold; }
         .container { padding: 15px; display: flex; flex-direction: column; align-items: center; }
         
         .form-group { width: 100%; max-width: 350px; margin-bottom: 12px; text-align: left; }
@@ -16,48 +16,47 @@
             background: #2a2a2a; color: white; box-sizing: border-box; font-size: 16px;
         }
 
+        /* Tampilan Nama Toko yang muncul otomatis */
+        #displayNama { 
+            margin-top: 5px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em;
+        }
+
         .camera-box { 
             position: relative; width: 100%; max-width: 350px; height: 380px; 
-            background: #000; border: 2px solid #333; border-radius: 12px; overflow: hidden;
+            background: #000; border: 2px solid #333; border-radius: 12px; overflow: hidden; margin-top: 10px;
         }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
-        #ghost { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; opacity: 0.4; display: none; pointer-events: none; 
-        }
+        #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.4; display: none; pointer-events: none; }
 
         .btn-group { margin-top: 15px; width: 100%; max-width: 350px; }
-        button { 
-            width: 100%; padding: 15px; font-size: 16px; font-weight: bold; 
-            border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer;
-        }
+        button { width: 100%; padding: 15px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; margin-bottom: 10px; }
         #btn-main { background: #ffc107; color: black; }
         #btn-send { background: #28a745; color: white; display: none; }
         #btn-retry { background: #6c757d; color: white; display: none; }
-        
         #status { font-size: 12px; color: #888; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="header">FOTO LAPORAN PEKERJAAN</div>
+<div class="header">MTC PRESISI - KORWIL</div>
 
 <div class="container">
     <div class="form-group">
         <label>Tahap Pekerjaan:</label>
         <select id="tahap" onchange="toggleGhost()">
             <option value="SEBELUM">FOTO SEBELUM</option>
-            <option value="PROSES">FOTO PROSES PEKERJAAN</option>
+            <option value="PROSES">FOTO PROSES</option>
             <option value="SESUDAH">FOTO SESUDAH</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label>Kode Toko (Cari/Ketik):</label>
-        <input list="listToko" id="kodeToko" placeholder="Contoh: T001..." onfocus="muatDaftarToko()">
+        <label>Kode Toko (Dropdown/Ketik):</label>
+        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
         <datalist id="listToko"></datalist>
+        <div id="displayNama">-- Nama Toko Akan Muncul --</div>
     </div>
 
     <div class="camera-box">
@@ -68,15 +67,21 @@
 
     <div class="btn-group">
         <button id="btn-main" onclick="handleKamera()">AKTIFKAN KAMERA</button>
-        <button id="btn-send" onclick="kirimKeDrive()">KIRIM LAPORAN</button>
-        <button id="btn-retry" onclick="resetKamera()">AMBIL ULANG</button>
-        <p id="status">Status: Menunggu Izin</p>
+        <button id="btn-send" onclick="kirimKeDrive()">KIRIM FOTO</button>
+        <button id="btn-retry" onclick="resetKamera()">ULANGI</button>
+        <p id="status">Status: Standby</p>
     </div>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec"; // GANTI DENGAN URL /exec ANDA
+    
+    let daftarToko = []; 
+    let streamAktif = null;
+    let fotoSebelumnya = null;
+
     const video = document.getElementById('video');
     const preview = document.getElementById('preview');
     const ghost = document.getElementById('ghost');
@@ -84,38 +89,33 @@
     const btnSend = document.getElementById('btn-send');
     const btnRetry = document.getElementById('btn-retry');
     const statusTxt = document.getElementById('status');
-    const canvas = document.getElementById('canvas');
-
-    // GANTI INI DENGAN URL /exec ANDA
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
-
-    let streamAktif = null;
-    let fotoSebelumnya = null;
+    const displayNama = document.getElementById('displayNama');
 
     async function muatDaftarToko() {
-    const list = document.getElementById('listToko');
-    if (list.options.length > 0) return;
-    
-    statusTxt.innerText = "Menghubungkan ke database...";
-    
-    // Gunakan URL GAS langsung tanpa parameter tambahan dulu untuk tes
-    try {
-        const res = await fetch(GAS_URL); 
-        const data = await res.json();
-        
-        list.innerHTML = ""; 
-        data.forEach(t => {
-            let opt = document.createElement('option');
-            opt.value = t.kode;
-            opt.text = t.nama; 
-            list.appendChild(opt);
-        });
-        statusTxt.innerText = "Daftar toko siap.";
-    } catch (e) { 
-        console.error(e);
-        statusTxt.innerText = "Gagal memuat daftar. Coba klik lagi."; 
+        if (daftarToko.length > 0) return;
+        statusTxt.innerText = "Sinkronisasi data Korwil...";
+        try {
+            const res = await fetch(GAS_URL);
+            daftarToko = await res.json();
+            const list = document.getElementById('listToko');
+            daftarToko.forEach(t => {
+                let opt = document.createElement('option');
+                opt.value = t.kode;
+                list.appendChild(opt);
+            });
+            statusTxt.innerText = "Data Toko Terupdate.";
+        } catch (e) { statusTxt.innerText = "Gagal memuat data."; }
     }
-}
+
+    function updateNamaToko() {
+        const input = document.getElementById('kodeToko').value.toUpperCase();
+        const ketemu = daftarToko.find(t => t.kode.toUpperCase() === input);
+        if (ketemu) {
+            displayNama.innerText = "Toko: " + ketemu.nama;
+        } else {
+            displayNama.innerText = "-- Kode Tidak Dikenal --";
+        }
+    }
 
     async function handleKamera() {
         if (!streamAktif) {
@@ -123,7 +123,6 @@
                 streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = streamAktif;
                 btnMain.innerText = "AMBIL FOTO";
-                statusTxt.innerText = "Kamera Aktif.";
                 toggleGhost();
             } catch (e) { alert("Izin kamera ditolak!"); }
         } else {
@@ -131,28 +130,16 @@
         }
     }
 
-    function toggleGhost() {
-        const tahap = document.getElementById('tahap').value;
-        if (tahap === "SESUDAH" && fotoSebelumnya) {
-            ghost.src = fotoSebelumnya;
-            ghost.style.display = "block";
-            statusTxt.innerText = "Ghost Mode Aktif (40%)";
-        } else {
-            ghost.style.display = "none";
-        }
-    }
-
     function tangkapFoto() {
+        const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        const data = canvas.toDataURL('image/jpeg', 0.8);
+        preview.src = canvas.toDataURL('image/jpeg', 0.8);
         
-        preview.src = data;
         video.style.display = "none";
         preview.style.display = "block";
-        ghost.style.display = "none";
         btnMain.style.display = "none";
         btnSend.style.display = "block";
         btnRetry.style.display = "block";
@@ -167,28 +154,37 @@
         toggleGhost();
     }
 
+    function toggleGhost() {
+        const tahap = document.getElementById('tahap').value;
+        if (tahap === "SESUDAH" && fotoSebelumnya) {
+            ghost.src = fotoSebelumnya;
+            ghost.style.display = "block";
+        } else {
+            ghost.style.display = "none";
+        }
+    }
+
     function kirimKeDrive() {
         const kode = document.getElementById('kodeToko').value;
-        const tahap = document.getElementById('tahap').value;
-        if(!kode) return alert("Pilih Kode Toko!");
+        if(displayNama.innerText.includes("Tidak Dikenal")) return alert("Kode Toko salah!");
 
-        statusTxt.innerText = "Sedang mengirim ke Drive...";
+        statusTxt.innerText = "Mengirim...";
         btnSend.disabled = true;
 
         fetch(GAS_URL, {
             method: "POST",
             mode: "no-cors",
             body: JSON.stringify({
-                tahap: tahap,
+                tahap: document.getElementById('tahap').value,
                 kodeToko: kode,
                 foto: preview.src
             })
         }).then(() => {
-            alert("Berhasil! Foto tersimpan di folder toko.");
-            if (tahap === "SEBELUM") fotoSebelumnya = preview.src;
+            alert("Berhasil Terkirim!");
+            if (document.getElementById('tahap').value === "SEBELUM") fotoSebelumnya = preview.src;
             location.reload();
-        }).catch(e => {
-            alert("Gagal kirim.");
+        }).catch(() => {
+            alert("Gagal Kirim!");
             btnSend.disabled = false;
         });
     }
