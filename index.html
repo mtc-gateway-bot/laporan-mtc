@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presisi Foto MTC - Lampung</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #222; color: white; text-align: center; }
+        .header { background: #007bff; padding: 20px; font-size: 18px; font-weight: bold; }
+        .container { padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Area Kamera */
+        .camera-box { 
+            position: relative; width: 100%; max-width: 350px; height: 450px; 
+            background: #000; border: 3px solid #444; border-radius: 12px; overflow: hidden;
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Gambar Bayangan (Ghost Image) */
+        #ghost { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            object-fit: cover; opacity: 0.4; display: none; pointer-events: none; 
+        }
+
+        .btn-group { margin-top: 20px; width: 100%; max-width: 350px; }
+        button { 
+            width: 100%; padding: 18px; font-size: 16px; font-weight: bold; 
+            border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer;
+        }
+        #btn-start { background: #ffc107; color: black; }
+        #btn-capture { background: #28a745; color: white; display: none; }
+        
+        #status { margin-top: 10px; font-size: 14px; color: #bbb; }
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">SISTEM FOTO IDENTIK (MTC)</div>
+
+<div class="container">
+    <div class="camera-box">
+        <video id="video" autoplay playsinline></video>
+        <img id="ghost" src="" />
+    </div>
+
+    <div class="btn-group">
+        <button id="btn-start" onclick="mulaiKamera()">1. AKTIFKAN KAMERA</button>
+        <button id="btn-capture" onclick="ambilDanKirim()">2. AMBIL & SIMPAN FOTO</button>
+        <p id="status">Status: Menunggu Izin Kamera</p>
+    </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const video = document.getElementById('video');
+    const ghost = document.getElementById('ghost');
+    const btnStart = document.getElementById('btn-start');
+    const btnCapture = document.getElementById('btn-capture');
+    const statusTxt = document.getElementById('status');
+    const canvas = document.getElementById('canvas');
+
+    // GANTI LINK DI BAWAH INI DENGAN LINK /exec DARI GOOGLE APPS SCRIPT ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
+
+    async function mulaiKamera() {
+        statusTxt.innerText = "Membuka kamera...";
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            video.srcObject = stream;
+            btnStart.style.display = "none";
+            btnCapture.style.display = "block";
+            statusTxt.innerText = "Kamera Aktif. Samakan posisi objek.";
+        } catch (err) {
+            alert("Gagal akses kamera: " + err.message);
+            statusTxt.innerText = "Error Kamera!";
+        }
+    }
+
+    function ambilDanKirim() {
+        statusTxt.innerText = "Menyimpan foto...";
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+
+        const dataJpg = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Tampilkan sebagai bayangan (ghost)
+        ghost.src = dataJpg;
+        ghost.style.display = "block";
+
+        // Kirim data ke Google Apps Script
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: "no-cors", 
+            body: JSON.stringify({
+                foto: dataJpg,
+                nama: "MTC_" + new Date().getTime() + ".jpg"
+            })
+        }).then(() => {
+            statusTxt.innerText = "Berhasil Terkirim!";
+            alert("Foto terkirim ke Drive Lampung!");
+        }).catch(e => {
+            statusTxt.innerText = "Gagal kirim!";
+            console.error(e);
+        });
+    }
+</script>
+
+</body>
+</html>
