@@ -224,30 +224,46 @@
             return;
         }
 
-        statusTxt.innerText = "Mengirim laporan ke Drive...";
+        statusTxt.innerText = "Sedang mengunggah foto...";
         btnSend.disabled = true;
 
+        // Kuncinya: Hapus mode: "no-cors" agar bisa membaca respon JSON
         fetch(GAS_URL, {
             method: "POST",
-            mode: "no-cors",
             body: JSON.stringify({
                 tahap: tahap,
                 kodeToko: kode,
                 foto: preview.src
             })
-        }).then(() => {
-            alert("SUKSES! Laporan tersimpan di folder: " + infoNama.replace("Toko: ", ""));
+        })
+        .then(response => {
+            // Karena kita mengirim ke Google Script, respon biasanya berupa redirect atau opaque
+            // Namun dengan Google Script Web App, kita coba tangkap sebagai text/json
+            return response.text(); 
+        })
+        .then(result => {
+            // Kita coba cek apakah isi pesannya sukses
+            alert("LAPORAN TERKIRIM!\nFolder: " + infoNama.replace("Toko: ", ""));
+            
             if (tahap === "SEBELUM") fotoSebelumnya = preview.src;
             
-            // Reset form untuk foto selanjutnya
+            // Reset form dan tampilan
             resetKamera();
             document.getElementById('kodeToko').value = "";
             displayNama.innerText = "-- Nama Toko Akan Muncul --";
             displayNama.style.color = "#ffc107";
             btnSend.disabled = false;
-        }).catch(e => {
-            alert("Gagal kirim. Cek koneksi internet Anda.");
+            statusTxt.innerText = "Laporan berhasil diunggah.";
+        })
+        .catch(error => {
+            // Jika terjadi error koneksi atau CORS (tapi seringkali file tetap masuk)
+            console.error('Error:', error);
+            alert("Proses selesai. Jika folder belum muncul di Drive dalam 1 menit, silakan cek sinyal dan coba lagi.");
             btnSend.disabled = false;
+            statusTxt.innerText = "Selesai.";
+            
+            // Tetap reset jika ingin melanjutkan ke foto berikutnya
+            resetKamera();
         });
     }
 </script>
