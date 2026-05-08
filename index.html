@@ -152,36 +152,43 @@
     }
 
     function tangkapFoto() {
-        const tahap = document.getElementById('tahap').value;
-        const adaFotoLama = localStorage.getItem("foto_mtc_sebelum");
+    const tahap = document.getElementById('tahap').value;
+    const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
 
-        // PROTEKSI: Jika salah pencet SEBELUM padahal sudah ada foto lama
-        if (tahap === "SEBELUM" && adaFotoLama) {
-            const tanya = confirm("Sudah ada foto SEBELUM yang tersimpan untuk bayangan. Apakah Anda ingin menggantinya dengan foto baru ini?");
-            if (!tanya) return; // Batalkan ambil foto baru jika user menolak
-        }
-
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        
-        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-        preview.src = dataURL;
-        
-        // Simpan bayangan ke memori HP jika tahapnya SEBELUM
-        if (tahap === "SEBELUM") {
-            localStorage.setItem("foto_mtc_sebelum", dataURL);
-        }
-        
-        video.style.display = "none";
-        preview.style.display = "block";
-        ghost.style.display = "none";
-        btnMain.style.display = "none";
-        btnSend.style.display = "block";
-        btnRetry.style.display = "block";
+    if (!kode) {
+        alert("Pilih/Isi Kode Toko dulu sebelum ambil foto!");
+        return;
     }
+
+    // Nama penyimpanan unik per toko
+    const storageKey = "foto_mtc_" + kode;
+    const adaFotoLama = localStorage.getItem(storageKey);
+
+    if (tahap === "SEBELUM" && adaFotoLama) {
+        const tanya = confirm("Sudah ada foto SEBELUM untuk toko " + kode + ". Ingin mengganti bayangannya?");
+        if (!tanya) return;
+    }
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    
+    const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+    preview.src = dataURL;
+    
+    if (tahap === "SEBELUM") {
+        localStorage.setItem(storageKey, dataURL);
+    }
+    
+    video.style.display = "none";
+    preview.style.display = "block";
+    ghost.style.display = "none";
+    btnMain.style.display = "none";
+    btnSend.style.display = "block";
+    btnRetry.style.display = "block";
+}
 
     function resetKamera() {
         video.style.display = "block";
