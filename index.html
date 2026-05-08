@@ -2,68 +2,70 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ACL FOTO PEKERJAAN v1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACL FOTO PEKERJAAN v2</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #121212; color: white; text-align: center; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #121212; color: white; text-align: center; display: flex; flex-direction: column; min-height: 100vh; }
         .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .container { padding: 15px; flex: 1; display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto; width: 100%; box-sizing: border-box; }
         
         .form-group { width: 100%; margin-bottom: 20px; text-align: left; }
         label { font-size: 13px; color: #bbb; margin-bottom: 8px; display: block; font-weight: 500; }
-        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
-        
-        input:disabled { background: #333; color: #666; cursor: wait; border: 1px solid #444; }
-        
+        input { 
+            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; 
+            background: #1e1e1e; color: white; box-sizing: border-box; font-size: 16px; outline: none;
+        }
         #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
         
-        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; margin-bottom: 5px; }
+        .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.3s; }
+        .slot-grid.active { border: 2px solid #007bff; background: #002b55; box-shadow: 0 0 10px rgba(0,123,255,0.4); }
         .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
         .slot-label { font-size: 10px; color: #888; position: absolute; font-weight: bold; text-transform: uppercase; padding: 4px 8px; background: rgba(0,0,0,0.5); border-radius: 4px; pointer-events: none; }
 
-        /* KAMERA FULLSCREEN OVERLAY */
-        #camContainer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999; display: none; flex-direction: column;
-        }
+        .camera-box { position: relative; width: 100%; height: 350px; background: #000; border: 2px solid #333; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
         #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.35; display: none; pointer-events: none; }
         
-        .cam-controls {
-            position: absolute; bottom: 30px; left: 0; width: 100%;
-            display: flex; flex-direction: column; align-items: center; gap: 15px;
-            padding: 0 20px; box-sizing: border-box; z-index: 10001;
-        }
-        .btn-capture { background: white; color: black; border-radius: 50%; width: 70px; height: 70px; border: 5px solid rgba(0,123,255,0.5); font-weight: bold; border: none; cursor: pointer; }
-        .btn-send { background: #28a745; color: white; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; border:none; cursor: pointer; }
-        .btn-retry { background: #dc3545; color: white; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; border:none; cursor: pointer; }
-        
-        /* FIX TOMBOL CLOSE AGAR BISA DIKLIK */
-        .btn-close { 
-            position: absolute; top: 30px; right: 20px; 
-            background: rgba(220, 53, 69, 0.9); color: white; 
-            width: 50px; height: 50px; border-radius: 50%; 
-            font-size: 28px; font-weight: bold; border: none;
-            z-index: 10005; cursor: pointer; display: flex;
-            align-items: center; justify-content: center;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7);
-        }
+        .btn-group { margin-top: 15px; width: 100%; display: none; }
+        button { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
+        button:disabled { background: #333 !important; color: #777 !important; cursor: not-allowed; }
+        .btn-capture { background: #ffc107; color: black; }
+        .btn-send { background: #28a745; color: white; }
+        .btn-retry { background: #6c757d; color: white; }
 
-        #loaderOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10010; }
-        .spinner-container { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
-        .spinner { width: 100%; height: 100%; border: 6px solid #333; border-top: 6px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        #loaderOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10000;
+        }
+        .spinner-container { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .spinner { width: 100px; height: 100px; border: 8px solid #333; border-top: 8px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        #percentText { position: absolute; font-weight: bold; font-size: 20px; color: white; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .app-version { padding: 15px; font-size: 11px; color: #555; font-family: monospace; }
+        #customAlert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+        .alert-box { background: #222; border: 2px solid #007bff; border-radius: 15px; padding: 25px; width: 100%; max-width: 300px; }
+        .alert-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-ok { background: #28a745; color: white; flex: 1; padding: 12px; border-radius: 8px; }
+        .btn-cancel { background: #dc3545; color: white; flex: 1; padding: 12px; border-radius: 8px; }
+
+        .app-version { padding: 15px; font-size: 11px; color: #555; font-family: monospace; letter-spacing: 1px; }
         canvas { display: none; }
     </style>
 </head>
 <body>
 
 <div id="loaderOverlay">
-    <div class="spinner-container"><div class="spinner"></div></div>
-    <div id="loaderText" style="font-weight:bold; color:#007bff; margin-top:15px;">Sinkronisasi Data...</div>
+    <div class="spinner-container">
+        <div class="spinner"></div>
+        <div id="percentText">0%</div>
+    </div>
+    <div id="loaderText" style="font-weight:bold; color:#007bff;">Sedang Mengirim...</div>
+</div>
+
+<div id="customAlert">
+    <div class="alert-box" id="alertContent"></div>
 </div>
 
 <div class="header">ACL FOTO PEKERJAAN</div>
@@ -71,84 +73,94 @@
 <div class="container">
     <div class="form-group">
         <label>Kode Toko:</label>
-        <input list="listToko" id="kodeToko" placeholder="Tunggu, sinkron data..." oninput="updateNamaToko()" disabled>
+        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()">
         <datalist id="listToko"></datalist>
-        <div id="displayNama">Menghubungkan ke database...</div>
+        <div id="displayNama">Memuat data toko...</div>
     </div>
 
-    <div style="width: 100%;">
+    <div style="width: 100%; margin-bottom: 15px;">
+        <label>Pilih Slot untuk Ambil Foto:</label>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-            <div class="slot-grid" onclick="pilihTahap(0, 'FOTO SEBELUM')">
+            <div class="slot-grid" id="box-0" onclick="pilihTahap(0, 'FOTO SEBELUM')">
                 <img id="slot-0" style="display:none;"><span id="label-0" class="slot-label">FOTO SEBELUM</span>
             </div>
-            <div class="slot-grid" onclick="pilihTahap(1, 'FOTO PROSES')">
+            <div class="slot-grid" id="box-1" onclick="pilihTahap(1, 'FOTO PROSES')">
                 <img id="slot-1" style="display:none;"><span id="label-1" class="slot-label">FOTO PROSES 1</span>
             </div>
-            <div class="slot-grid" onclick="pilihTahap(2, 'FOTO PROSES')">
+            <div class="slot-grid" id="box-2" onclick="pilihTahap(2, 'FOTO PROSES')">
                 <img id="slot-2" style="display:none;"><span id="label-2" class="slot-label">FOTO PROSES 2</span>
             </div>
-            <div class="slot-grid" onclick="pilihTahap(3, 'FOTO SESUDAH')">
+            <div class="slot-grid" id="box-3" onclick="pilihTahap(3, 'FOTO SESUDAH')">
                 <img id="slot-3" style="display:none;"><span id="label-3" class="slot-label">FOTO SESUDAH</span>
             </div>
         </div>
-        <button onclick="buatKolase()" id="btn-save-all" style="margin-top: 20px; background: #17a2b8; color: white; padding:16px; width:100%; border:none; border-radius:12px; font-weight:bold; display: none;">SIMPAN KOLASE & SELESAI</button>
+        <button onclick="buatKolase()" id="btn-save-all" style="margin-top: 15px; background: #17a2b8; color: white; display: none;">
+            SIMPAN KOLASE & SELESAI
+        </button>
     </div>
-</div>
 
-<div id="camContainer">
-    <button class="btn-close" onclick="tutupKamera()">×</button>
-    <video id="video" autoplay playsinline></video>
-    <img id="preview" />
-    <img id="ghost" src="" />
+    <div class="camera-box" id="camUI">
+        <video id="video" autoplay playsinline></video>
+        <img id="preview" />
+        <img id="ghost" src="" />
+    </div>
     
-    <div class="cam-controls">
-        <div id="labelCam" style="background:rgba(0,123,255,0.8); color:white; padding:5px 20px; border-radius:20px; font-size:12px; font-weight:bold;"></div>
-        <button class="btn-capture" id="btn-snap" onclick="tangkapFoto()">SNAP</button>
-        <button class="btn-send" id="btn-kirim" style="display:none;" onclick="kirimKeDrive()">KIRIM KE DRIVE</button>
-        <button class="btn-retry" id="btn-ulang" style="display:none;" onclick="bukaKamera()">ULANGI FOTO</button>
+    <div class="btn-group" id="btnGroupUI">
+        <button class="btn-capture" id="btn-snap" onclick="tangkapFoto()">AMBIL FOTO <span id="labelAktif"></span></button>
+        <button class="btn-send" id="btn-kirim" onclick="kirimKeDrive()">KIRIM LAPORAN KE DRIVE</button>
+        <button class="btn-retry" id="btn-ulang" onclick="bukaKamera()">ULANGI FOTO</button>
     </div>
 </div>
 
 <div class="app-version" id="versionDisplay">VERSI LOAD...</div>
+
 <canvas id="canvas"></canvas>
 
 <script>
-    const VERSI_APP = "v1.0.0 /Riyan_raka_siwi"; 
+    const VERSI_APP = "v2.0.0-Stable"; 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
     
-    let daftarToko = [], streamAktif = null, koleksiFoto = [null, null, null, null], logWaktu = [null, null, null, null];
-    let slotDipilih = null, namaTahapDipilih = "", isTokoValid = false;
+    let daftarToko = [], streamAktif = null, koleksiFoto = [null, null, null, null];
+    let logWaktu = [null, null, null, null];
+    let slotDipilih = null, namaTahapDipilih = "", progressInterval;
+    let isTokoValid = false;
 
     window.onload = () => {
         document.getElementById('versionDisplay').innerText = "Versi: " + VERSI_APP;
-        muatDaftarToko();
+        muatDaftarToko(); // Auto reload saat buka
     };
 
+    function setLoading(status, teks = "Sedang Mengirim...") {
+        const loader = document.getElementById('loaderOverlay');
+        const percentTxt = document.getElementById('percentText');
+        document.getElementById('loaderText').innerText = teks;
+        loader.style.display = status ? "flex" : "none";
+        if (status) {
+            let val = 0;
+            percentTxt.innerText = "0%";
+            progressInterval = setInterval(() => {
+                if (val < 90) { val += Math.floor(Math.random() * 3) + 1; percentTxt.innerText = Math.min(val, 90) + "%"; }
+            }, 200);
+        } else { clearInterval(progressInterval); }
+    }
+
+    function tunjukkanNotif(judul, pesan, tipe = "info", cb = null) {
+        const modal = document.getElementById('customAlert'), content = document.getElementById('alertContent');
+        content.innerHTML = `<h3>${judul}</h3><p>${pesan}</p><div class="alert-btns">
+            <button class="btn-ok" id="mOk">OK</button>${tipe==='confirm'?'<button class="btn-cancel" id="mNo">BATAL</button>':''}</div>`;
+        modal.style.display = "flex";
+        document.getElementById('mOk').onclick = () => { modal.style.display = "none"; if(cb) cb(true); };
+        if(tipe==='confirm') document.getElementById('mNo').onclick = () => { modal.style.display = "none"; if(cb) cb(false); };
+    }
+
     async function muatDaftarToko() {
-        const inputToko = document.getElementById('kodeToko');
-        const labelNama = document.getElementById('displayNama');
-        inputToko.disabled = true;
-        inputToko.placeholder = "Sinkronisasi data...";
-        labelNama.innerText = "Mohon tunggu, memuat database Korwil...";
-        
         try { 
             const r = await fetch(GAS_URL); 
             daftarToko = await r.json();
-            const l = document.getElementById('listToko'); 
-            l.innerHTML = "";
-            daftarToko.forEach(t => { 
-                let o = document.createElement('option'); 
-                o.value = t.kode; 
-                l.appendChild(o); 
-            });
-            inputToko.disabled = false;
-            inputToko.placeholder = "Ketik Kode Toko...";
-            labelNama.innerText = "-- Pilih Toko --";
-            labelNama.style.color = "#ffc107";
-        } catch (e) { 
-            labelNama.innerText = "Gagal sinkron! Periksa sinyal & refresh."; 
-            labelNama.style.color = "#dc3545";
-        }
+            const l = document.getElementById('listToko'); l.innerHTML = "";
+            daftarToko.forEach(t => { let o = document.createElement('option'); o.value = t.kode; l.appendChild(o); });
+            document.getElementById('displayNama').innerText = "-- Pilih Toko --";
+        } catch (e) { document.getElementById('displayNama').innerText = "Gagal memuat data!"; }
     }
 
     function updateNamaToko() {
@@ -156,66 +168,62 @@
         const t = daftarToko.find(x => x.kode.toUpperCase() === kode);
         const d = document.getElementById('displayNama');
         if(t) { 
-            d.innerText = "Toko: " + t.nama; 
-            d.style.color = "#28a745"; 
-            isTokoValid = true; 
-            muatFotoLokal(kode); 
+            d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; 
+            isTokoValid = true;
+            muatFotoLokal(kode);
         } else { 
-            d.innerText = "-- Kode Belum Terdaftar --"; 
-            d.style.color = "#dc3545"; 
-            isTokoValid = false; 
+            d.innerText = "-- Kode Tidak Valid --"; d.style.color = "#dc3545"; 
+            isTokoValid = false;
         }
+    }
+
+    function muatFotoLokal(kode) {
+        const s = localStorage.getItem("foto_mtc_" + kode);
+        if(s) { koleksiFoto[0] = s; isiSlotVisual(s, 0); }
     }
 
     function pilihTahap(idx, nama) {
-        if(!isTokoValid) {
-            alert("Masukkan Kode Toko yang VALID terlebih dahulu!");
-            return;
-        }
+        if(!isTokoValid) return tunjukkanNotif("Akses Ditolak", "Silakan masukkan Kode Toko yang VALID terlebih dahulu!");
         slotDipilih = idx; namaTahapDipilih = nama;
-        document.getElementById('camContainer').style.display = "flex";
-        document.getElementById('labelCam').innerText = nama;
+        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
+        document.getElementById('box-'+idx).classList.add('active');
+        document.getElementById('labelAktif').innerText = `(${nama})`;
+        document.getElementById('camUI').style.display = "block";
+        document.getElementById('btnGroupUI').style.display = "block";
         bukaKamera();
         const sblm = localStorage.getItem("foto_mtc_" + document.getElementById('kodeToko').value.toUpperCase());
-        const ghost = document.getElementById('ghost');
-        if(nama === "FOTO SESUDAH" && sblm) { 
-            ghost.src = sblm; ghost.style.display = "block"; 
-        } else { ghost.style.display = "none"; }
+        if(nama === "FOTO SESUDAH" && sblm) { ghost.src = sblm; ghost.style.display = "block"; } else { ghost.style.display = "none"; }
     }
 
     async function bukaKamera() {
-        const v = document.getElementById('video');
         document.getElementById('preview').style.display = "none";
-        v.style.display = "block";
+        document.getElementById('video').style.display = "block";
         document.getElementById('btn-snap').style.display = "block";
         document.getElementById('btn-kirim').style.display = "none";
         document.getElementById('btn-ulang').style.display = "none";
         if (!streamAktif) {
-            try { 
-                streamAktif = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: {ideal: 1280}, height: {ideal: 720} } 
-                });
-                v.srcObject = streamAktif;
-            } catch (e) { alert("Izin kamera diperlukan!"); }
+            try { streamAktif = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } });
+                document.getElementById('video').srcObject = streamAktif;
+            } catch (e) { tunjukkanNotif("Kamera", "Izin kamera ditolak!"); }
         }
-    }
-
-    function tutupKamera() {
-        if (streamAktif) { 
-            streamAktif.getTracks().forEach(t => t.stop()); 
-            streamAktif = null; 
-        }
-        document.getElementById('camContainer').style.display = "none";
     }
 
     function tangkapFoto() {
         const v = document.getElementById('video'), c = document.getElementById('canvas'), ctx = c.getContext('2d');
         c.width = v.videoWidth; c.height = v.videoHeight;
         ctx.drawImage(v, 0, 0);
-        const tgl = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        
+        // Tambahkan Timestamp pada Foto
+        const sekarang = new Date();
+        const tgl = sekarang.toLocaleString('id-ID');
         logWaktu[slotDipilih] = tgl;
-        ctx.font = "bold 30px monospace"; ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(10, c.height - 60, 420, 50);
-        ctx.fillStyle = "#00ff00"; ctx.fillText(tgl + " WIB", 20, c.height - 25);
+
+        ctx.font = "bold 30px Arial";
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(10, c.height - 50, ctx.measureText(tgl).width + 20, 40);
+        ctx.fillStyle = "white";
+        ctx.fillText(tgl, 20, c.height - 20);
+
         document.getElementById('preview').src = c.toDataURL('image/jpeg', 0.8);
         document.getElementById('preview').style.display = "block";
         v.style.display = "none";
@@ -225,70 +233,76 @@
     }
 
     function kirimKeDrive() {
-        const loader = document.getElementById('loaderOverlay');
         const kode = document.getElementById('kodeToko').value.toUpperCase();
-        loader.style.display = "flex";
-        document.getElementById('loaderText').innerText = "Mengunggah Gambar...";
-        fetch(GAS_URL, { 
-            method: "POST", mode: "no-cors", 
-            body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: document.getElementById('preview').src, waktu: logWaktu[slotDipilih] }) 
-        })
+        setLoading(true, "Mengunggah...");
+        fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: document.getElementById('preview').src, waktu: logWaktu[slotDipilih] }) })
         .then(() => {
-            if(namaTahapDipilih === "FOTO SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
-            isiSlotVisual(document.getElementById('preview').src, slotDipilih);
-            loader.style.display = "none"; tutupKamera();
-        })
-        .catch(() => { loader.style.display = "none"; alert("Gagal Terkirim!"); });
+            document.getElementById('percentText').innerText = "100%";
+            setTimeout(() => {
+                if(namaTahapDipilih === "FOTO SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
+                isiSlotVisual(document.getElementById('preview').src, slotDipilih);
+                setLoading(false); tunjukkanNotif("Sukses", "Data terkirim!"); resetUIKamera();
+            }, 500);
+        }).catch(() => { setLoading(false); tunjukkanNotif("Gagal", "Cek Sinyal!"); });
     }
 
     function isiSlotVisual(data, idx) {
         koleksiFoto[idx] = data;
         const s = document.getElementById('slot-'+idx);
         s.src = data; s.style.display = "block";
-        document.querySelectorAll('.slot-label')[idx].style.display = "none";
+        document.getElementById('label-'+idx).style.display = "none";
         document.getElementById('btn-save-all').style.display = "block";
     }
 
+    function resetUIKamera() {
+        document.getElementById('camUI').style.display = "none";
+        document.getElementById('btnGroupUI').style.display = "none";
+        document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
+    }
+
+    // FUNGSI KOLASE PRESISI (NON-GEPENG)
     function drawImageProp(ctx, img, x, y, w, h) {
+        var offsetX = 0.5, offsetY = 0.5;
         var iw = img.width, ih = img.height, r = Math.min(w / iw, h / ih), nw = iw * r, nh = ih * r, cx, cy, cw, ch, ar = 1;
         if (nw < w) ar = w / nw; if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh;
-        nw *= ar; nh *= ar; cw = iw / (nw / w); ch = ih / (nh / h);
-        cx = (iw - cw) * 0.5; cy = (ih - ch) * 0.5;
+        nw *= ar; nh *= ar;
+        cw = iw / (nw / w); ch = ih / (nh / h);
+        cx = (iw - cw) * offsetX; cy = (ih - ch) * offsetY;
         ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
     }
 
     function buatKolase() {
-        const loader = document.getElementById('loaderOverlay');
         const kode = document.getElementById('kodeToko').value.toUpperCase();
-        loader.style.display = "flex";
-        document.getElementById('loaderText').innerText = "Menyusun Kolase...";
+        setLoading(true, "Proses Kolase...");
         const c = document.createElement('canvas'); const ctx = c.getContext('2d');
-        c.width = 2400; c.height = 1600; ctx.fillStyle = "white"; ctx.fillRect(0,0,c.width,c.height);
+        c.width = 2400; c.height = 1600; // Ukuran standar kolase
+        ctx.fillStyle = "white"; ctx.fillRect(0,0,c.width,c.height);
+
         const loads = koleksiFoto.map((s, i) => new Promise(res => {
             if(s) { const img = new Image(); img.onload = () => res({img, i}); img.src = s; } else res({img:null, i});
         }));
+
         Promise.all(loads).then(res => {
             res.forEach(item => {
-                const x = (item.i % 2) * 1200 + 10, y = Math.floor(item.i / 2) * 800 + 75;
-                if(item.img) drawImageProp(ctx, item.img, x, y, 1180, 715);
+                const w = 1180, h = 780;
+                const x = (item.i % 2) * 1200 + 10, y = Math.floor(item.i / 2) * 800 + 10;
+                if(item.img) drawImageProp(ctx, item.img, x, y, w, h);
+                else { ctx.fillStyle = "#eee"; ctx.fillRect(x, y, w, h); ctx.fillStyle = "#ccc"; ctx.font = "bold 50px Arial"; ctx.textAlign = "center"; ctx.fillText("KOSONG", x+w/2, y+h/2); }
             });
-            ctx.fillStyle = "#007bff"; ctx.fillRect(0, 0, c.width, 70);
-            ctx.fillStyle = "white"; ctx.font = "bold 35px Arial";
-            ctx.fillText(`ACL FOTO PEKERJAAN: ${kode} - ${document.getElementById('displayNama').innerText}`, 20, 48);
-            const l = document.createElement('a'); l.href = c.toDataURL('image/jpeg', 0.9);
-            l.download = `KOLASE_${kode}.jpg`; l.click();
-            loader.style.display = "none"; alert("Kolase Berhasil!");
-        });
-    }
+            
+            // Header Kolase
+            ctx.fillStyle = "#007bff"; ctx.fillRect(0, 0, c.width, 60);
+            ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.textAlign = "left";
+            ctx.fillText(`LAPORAN PEKERJAAN: ${kode} - ${document.getElementById('displayNama').innerText}`, 20, 45);
 
-    function muatFotoLokal(kode) {
-        const s = localStorage.getItem("foto_mtc_" + kode);
-        if(s) { 
-            koleksiFoto[0] = s; 
-            const img = document.getElementById('slot-0');
-            img.src = s; img.style.display = "block";
-            document.querySelectorAll('.slot-label')[0].style.display = "none";
-        }
+            document.getElementById('percentText').innerText = "100%";
+            setTimeout(() => {
+                const l = document.createElement('a'); l.href = c.toDataURL('image/jpeg', 0.9);
+                l.download = `KOLASE_${kode}.jpg`; l.click();
+                setLoading(false);
+                tunjukkanNotif("Berhasil", "Mulai Toko Baru?", "confirm", (ya) => { if(ya) { localStorage.removeItem("foto_mtc_"+kode); location.reload(); }});
+            }, 800);
+        });
     }
 </script>
 </body>
