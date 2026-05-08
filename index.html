@@ -9,7 +9,6 @@
         .header { background: #007bff; padding: 20px; font-weight: bold; font-size: 1.2em; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .container { padding: 15px; flex: 1; display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto; width: 100%; box-sizing: border-box; }
         
-        /* Input & Form */
         .form-group { width: 100%; margin-bottom: 20px; text-align: left; }
         label { font-size: 13px; color: #bbb; margin-bottom: 8px; display: block; font-weight: 500; }
         input { 
@@ -18,26 +17,23 @@
         }
         #displayNama { margin-top: 8px; font-size: 14px; color: #ffc107; font-weight: bold; min-height: 1.2em; }
         
-        /* Grid Slot */
         .slot-grid { aspect-ratio: 16/9; background: #1e1e1e; border: 2px dashed #444; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: 0.3s; }
         .slot-grid.active { border: 2px solid #007bff; background: #002b55; box-shadow: 0 0 10px rgba(0,123,255,0.4); }
         .slot-grid img { width: 100%; height: 100%; object-fit: cover; }
         .slot-label { font-size: 10px; color: #888; position: absolute; font-weight: bold; text-transform: uppercase; padding: 4px 8px; background: rgba(0,0,0,0.5); border-radius: 4px; pointer-events: none; }
 
-        /* Kamera UI */
         .camera-box { position: relative; width: 100%; height: 350px; background: #000; border: 2px solid #333; border-radius: 15px; overflow: hidden; margin-top: 15px; display: none; }
         video, #preview { width: 100%; height: 100%; object-fit: cover; }
         #preview { display: none; }
         #ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.35; display: none; pointer-events: none; }
         
-        /* Buttons */
         .btn-group { margin-top: 15px; width: 100%; display: none; }
         button { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-bottom: 12px; cursor: pointer; }
+        button:disabled { background: #333 !important; color: #777 !important; cursor: not-allowed; }
         .btn-capture { background: #ffc107; color: black; }
         .btn-send { background: #28a745; color: white; }
         .btn-retry { background: #6c757d; color: white; }
 
-        /* LOADER PENGAMAN */
         #loaderOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: none; flex-direction: column;
@@ -48,16 +44,13 @@
         #percentText { position: absolute; font-weight: bold; font-size: 20px; color: white; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Custom Modal */
         #customAlert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
         .alert-box { background: #222; border: 2px solid #007bff; border-radius: 15px; padding: 25px; width: 100%; max-width: 300px; }
         .alert-btns { display: flex; gap: 10px; margin-top: 15px; }
         .btn-ok { background: #28a745; color: white; flex: 1; padding: 12px; border-radius: 8px; }
         .btn-cancel { background: #dc3545; color: white; flex: 1; padding: 12px; border-radius: 8px; }
 
-        /* FOOTER VERSI */
         .app-version { padding: 15px; font-size: 11px; color: #555; font-family: monospace; letter-spacing: 1px; }
-
         canvas { display: none; }
     </style>
 </head>
@@ -80,9 +73,9 @@
 <div class="container">
     <div class="form-group">
         <label>Kode Toko:</label>
-        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()" onfocus="muatDaftarToko()">
+        <input list="listToko" id="kodeToko" placeholder="Ketik Kode Toko..." oninput="updateNamaToko()">
         <datalist id="listToko"></datalist>
-        <div id="displayNama">-- Pilih Toko Terlebih Dahulu --</div>
+        <div id="displayNama">Memuat data toko...</div>
     </div>
 
     <div style="width: 100%; margin-bottom: 15px;">
@@ -124,18 +117,17 @@
 <canvas id="canvas"></canvas>
 
 <script>
-    // ==========================================
-    // UBAH VERSI APLIKASI DI SINI
-    // ==========================================
     const VERSI_APP = "v1.0.0-Stable"; 
-    // ==========================================
-
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyj3n-GH4pnX1CiPptqqHlU50N0MuaUaqTYBEe_pDr3n_aW1b15QokVlUlEXeijD09I/exec";
+    
     let daftarToko = [], streamAktif = null, koleksiFoto = [null, null, null, null];
+    let logWaktu = [null, null, null, null];
     let slotDipilih = null, namaTahapDipilih = "", progressInterval;
+    let isTokoValid = false;
 
     window.onload = () => {
         document.getElementById('versionDisplay').innerText = "Versi: " + VERSI_APP;
+        muatDaftarToko(); // Auto reload saat buka
     };
 
     function setLoading(status, teks = "Sedang Mengirim...") {
@@ -143,17 +135,11 @@
         const percentTxt = document.getElementById('percentText');
         document.getElementById('loaderText').innerText = teks;
         loader.style.display = status ? "flex" : "none";
-        document.getElementById('btn-kirim').disabled = status;
-
         if (status) {
             let val = 0;
             percentTxt.innerText = "0%";
             progressInterval = setInterval(() => {
-                if (val < 90) {
-                    val += Math.floor(Math.random() * 3) + 1;
-                    if (val > 90) val = 90;
-                    percentTxt.innerText = val + "%";
-                }
+                if (val < 90) { val += Math.floor(Math.random() * 3) + 1; percentTxt.innerText = Math.min(val, 90) + "%"; }
             }, 200);
         } else { clearInterval(progressInterval); }
     }
@@ -173,15 +159,22 @@
             daftarToko = await r.json();
             const l = document.getElementById('listToko'); l.innerHTML = "";
             daftarToko.forEach(t => { let o = document.createElement('option'); o.value = t.kode; l.appendChild(o); });
-        } catch (e) {}
+            document.getElementById('displayNama').innerText = "-- Pilih Toko --";
+        } catch (e) { document.getElementById('displayNama').innerText = "Gagal memuat data!"; }
     }
 
     function updateNamaToko() {
         const kode = document.getElementById('kodeToko').value.trim().toUpperCase();
         const t = daftarToko.find(x => x.kode.toUpperCase() === kode);
         const d = document.getElementById('displayNama');
-        if(t) { d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; muatFotoLokal(kode); }
-        else { d.innerText = "-- Kode Tidak Dikenal --"; d.style.color = "#dc3545"; }
+        if(t) { 
+            d.innerText = "Toko: " + t.nama; d.style.color = "#28a745"; 
+            isTokoValid = true;
+            muatFotoLokal(kode);
+        } else { 
+            d.innerText = "-- Kode Tidak Valid --"; d.style.color = "#dc3545"; 
+            isTokoValid = false;
+        }
     }
 
     function muatFotoLokal(kode) {
@@ -190,8 +183,7 @@
     }
 
     function pilihTahap(idx, nama) {
-        const kode = document.getElementById('kodeToko').value.trim();
-        if(!kode) return tunjukkanNotif("Info", "Isi Kode Toko dulu!");
+        if(!isTokoValid) return tunjukkanNotif("Akses Ditolak", "Silakan masukkan Kode Toko yang VALID terlebih dahulu!");
         slotDipilih = idx; namaTahapDipilih = nama;
         document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
         document.getElementById('box-'+idx).classList.add('active');
@@ -199,9 +191,8 @@
         document.getElementById('camUI').style.display = "block";
         document.getElementById('btnGroupUI').style.display = "block";
         bukaKamera();
-        const sblm = localStorage.getItem("foto_mtc_" + kode.toUpperCase());
+        const sblm = localStorage.getItem("foto_mtc_" + document.getElementById('kodeToko').value.toUpperCase());
         if(nama === "FOTO SESUDAH" && sblm) { ghost.src = sblm; ghost.style.display = "block"; } else { ghost.style.display = "none"; }
-        document.getElementById('camUI').scrollIntoView({behavior: 'smooth'});
     }
 
     async function bukaKamera() {
@@ -221,6 +212,18 @@
         const v = document.getElementById('video'), c = document.getElementById('canvas'), ctx = c.getContext('2d');
         c.width = v.videoWidth; c.height = v.videoHeight;
         ctx.drawImage(v, 0, 0);
+        
+        // Tambahkan Timestamp pada Foto
+        const sekarang = new Date();
+        const tgl = sekarang.toLocaleString('id-ID');
+        logWaktu[slotDipilih] = tgl;
+
+        ctx.font = "bold 30px Arial";
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(10, c.height - 50, ctx.measureText(tgl).width + 20, 40);
+        ctx.fillStyle = "white";
+        ctx.fillText(tgl, 20, c.height - 20);
+
         document.getElementById('preview').src = c.toDataURL('image/jpeg', 0.8);
         document.getElementById('preview').style.display = "block";
         v.style.display = "none";
@@ -231,18 +234,16 @@
 
     function kirimKeDrive() {
         const kode = document.getElementById('kodeToko').value.toUpperCase();
-        setLoading(true, "Mengunggah Laporan...");
-        fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: document.getElementById('preview').src }) })
+        setLoading(true, "Mengunggah...");
+        fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ tahap: namaTahapDipilih, kodeToko: kode, foto: document.getElementById('preview').src, waktu: logWaktu[slotDipilih] }) })
         .then(() => {
             document.getElementById('percentText').innerText = "100%";
             setTimeout(() => {
                 if(namaTahapDipilih === "FOTO SEBELUM") localStorage.setItem("foto_mtc_" + kode, document.getElementById('preview').src);
                 isiSlotVisual(document.getElementById('preview').src, slotDipilih);
-                setLoading(false);
-                tunjukkanNotif("Sukses", "Laporan berhasil terkirim!");
-                resetUIKamera();
+                setLoading(false); tunjukkanNotif("Sukses", "Data terkirim!"); resetUIKamera();
             }, 500);
-        }).catch(() => { setLoading(false); tunjukkanNotif("Gagal", "Gagal mengirim, periksa sinyal!"); });
+        }).catch(() => { setLoading(false); tunjukkanNotif("Gagal", "Cek Sinyal!"); });
     }
 
     function isiSlotVisual(data, idx) {
@@ -259,27 +260,47 @@
         document.querySelectorAll('.slot-grid').forEach(el => el.classList.remove('active'));
     }
 
+    // FUNGSI KOLASE PRESISI (NON-GEPENG)
+    function drawImageProp(ctx, img, x, y, w, h) {
+        var offsetX = 0.5, offsetY = 0.5;
+        var iw = img.width, ih = img.height, r = Math.min(w / iw, h / ih), nw = iw * r, nh = ih * r, cx, cy, cw, ch, ar = 1;
+        if (nw < w) ar = w / nw; if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh;
+        nw *= ar; nh *= ar;
+        cw = iw / (nw / w); ch = ih / (nh / h);
+        cx = (iw - cw) * offsetX; cy = (ih - ch) * offsetY;
+        ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
+    }
+
     function buatKolase() {
         const kode = document.getElementById('kodeToko').value.toUpperCase();
-        setLoading(true, "Menyusun Kolase...");
+        setLoading(true, "Proses Kolase...");
         const c = document.createElement('canvas'); const ctx = c.getContext('2d');
-        c.width = 2560; c.height = 1440;
-        ctx.fillStyle = "#111"; ctx.fillRect(0,0,2560,1440);
+        c.width = 2400; c.height = 1600; // Ukuran standar kolase
+        ctx.fillStyle = "white"; ctx.fillRect(0,0,c.width,c.height);
+
         const loads = koleksiFoto.map((s, i) => new Promise(res => {
             if(s) { const img = new Image(); img.onload = () => res({img, i}); img.src = s; } else res({img:null, i});
         }));
+
         Promise.all(loads).then(res => {
             res.forEach(item => {
-                const x = (item.i % 2) * 1280, y = Math.floor(item.i / 2) * 720;
-                if(item.img) ctx.drawImage(item.img, x, y, 1280, 720);
-                else { ctx.fillStyle = "#333"; ctx.fillRect(x+10, y+10, 1260, 700); ctx.fillStyle = "#555"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center"; ctx.fillText("KOSONG", x+640, y+360); }
+                const w = 1180, h = 780;
+                const x = (item.i % 2) * 1200 + 10, y = Math.floor(item.i / 2) * 800 + 10;
+                if(item.img) drawImageProp(ctx, item.img, x, y, w, h);
+                else { ctx.fillStyle = "#eee"; ctx.fillRect(x, y, w, h); ctx.fillStyle = "#ccc"; ctx.font = "bold 50px Arial"; ctx.textAlign = "center"; ctx.fillText("KOSONG", x+w/2, y+h/2); }
             });
+            
+            // Header Kolase
+            ctx.fillStyle = "#007bff"; ctx.fillRect(0, 0, c.width, 60);
+            ctx.fillStyle = "white"; ctx.font = "bold 40px Arial"; ctx.textAlign = "left";
+            ctx.fillText(`LAPORAN PEKERJAAN: ${kode} - ${document.getElementById('displayNama').innerText}`, 20, 45);
+
             document.getElementById('percentText').innerText = "100%";
             setTimeout(() => {
                 const l = document.createElement('a'); l.href = c.toDataURL('image/jpeg', 0.9);
                 l.download = `KOLASE_${kode}.jpg`; l.click();
                 setLoading(false);
-                tunjukkanNotif("Berhasil", "Kolase tersimpan! Mulai baru?", "confirm", (ya) => { if(ya) { localStorage.removeItem("foto_mtc_"+kode); location.reload(); }});
+                tunjukkanNotif("Berhasil", "Mulai Toko Baru?", "confirm", (ya) => { if(ya) { localStorage.removeItem("foto_mtc_"+kode); location.reload(); }});
             }, 800);
         });
     }
