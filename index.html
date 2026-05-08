@@ -93,30 +93,29 @@
     let fotoSebelumnya = null;
 
     async function muatDaftarToko() {
-        const list = document.getElementById('listToko');
-        if (list.options.length > 0) return;
+    const list = document.getElementById('listToko');
+    if (list.options.length > 0) return;
+    
+    statusTxt.innerText = "Menghubungkan ke database...";
+    
+    // Gunakan URL GAS langsung tanpa parameter tambahan dulu untuk tes
+    try {
+        const res = await fetch(GAS_URL); 
+        const data = await res.json();
         
-        statusTxt.innerText = "Memuat daftar toko...";
-        
-        try {
-            // Gunakan fetch dengan mode cors
-            const res = await fetch(GAS_URL + "?action=getStoreList");
-            const data = await res.json();
-            
-            list.innerHTML = ""; // Bersihkan list dulu
-            data.forEach(t => {
-                let opt = document.createElement('option');
-                opt.value = t.kode;
-                // Menampilkan Kode - Nama Toko agar teknisi mudah mencari
-                opt.text = t.kode + " - " + t.nama; 
-                list.appendChild(opt);
-            });
-            statusTxt.innerText = "Daftar toko siap.";
-        } catch (e) { 
-            console.error(e);
-            statusTxt.innerText = "Gagal muat daftar. Cek koneksi."; 
-        }
+        list.innerHTML = ""; 
+        data.forEach(t => {
+            let opt = document.createElement('option');
+            opt.value = t.kode;
+            opt.text = t.nama; 
+            list.appendChild(opt);
+        });
+        statusTxt.innerText = "Daftar toko siap.";
+    } catch (e) { 
+        console.error(e);
+        statusTxt.innerText = "Gagal memuat daftar. Coba klik lagi."; 
     }
+}
 
     async function handleKamera() {
         if (!streamAktif) {
